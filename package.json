@@ -1,0 +1,37 @@
+{
+  "name": "bento-kp-builder",
+  "version": "1.0.0",
+  "description": "Bento Grid Конструктор КП",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win portable"
+  },
+  "author": "ASV",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-updater": "^6.1.7"
+  },
+  "build": {
+    "appId": "com.asv74.bentokp",
+    "productName": "Конструктор КП",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kryvlad1993-ai",
+        "repo": "bento-kp-builder"
+      }
+    ]
+  }
+}
