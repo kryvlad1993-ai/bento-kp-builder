@@ -1,6 +1,6 @@
 {
   "name": "bento-kp-builder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Bento Grid Конструктор КП",
   "main": "main.js",
   "scripts": {
