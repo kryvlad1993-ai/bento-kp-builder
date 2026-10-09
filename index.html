@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bento Grid Конструктор КП — Drag & Drop + Resize + PDF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Bento Grid Конструктор КП — Mobile & Desktop</title>
   <!-- Шрифт Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Библиотеки для рендера в PNG и многостраничный PDF -->
+  <!-- Библиотеки для экспорта -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -25,6 +25,7 @@
       --radius-lg: 22px;
       --radius-md: 16px;
       --radius-pill: 999px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     * {
@@ -32,28 +33,32 @@
       margin: 0;
       padding: 0;
       font-family: 'Montserrat', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: #16181f;
+      background-color: #12141a;
       color: var(--text-main);
-      padding-bottom: 90px;
+      padding-bottom: calc(100px + var(--safe-bottom));
       user-select: none;
+      overflow-x: hidden;
     }
 
-    /* ОВЕРЛЕЙ ПРОГРЕССА ГЕНЕРАЦИИ PDF */
+    /* ОВЕРЛЕЙ ЭКСПОРТА */
     .pdf-Export-Overlay {
       position: fixed;
       inset: 0;
-      background: rgba(17, 19, 24, 0.9);
-      backdrop-filter: blur(6px);
-      z-index: 9999;
+      background: rgba(17, 19, 24, 0.94);
+      backdrop-filter: blur(8px);
+      z-index: 99999;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       color: #fff;
       gap: 16px;
+      padding: 20px;
+      text-align: center;
     }
     .pdf-Export-Overlay.active { display: flex; }
 
@@ -67,88 +72,117 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ВЕРХНЯЯ ПАНЕЛЬ ИНСТРУМЕНТОВ */
-    .toolbar {
+    /* ВЕРХНЯЯ ШАПКА */
+    .header-bar {
       position: sticky;
       top: 0;
       z-index: 1000;
-      background: #101217;
-      color: #fff;
-      padding: 10px 20px;
+      background: #0d0f14;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      border-bottom: 1px solid rgba(255,255,255,0.09);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
 
-    .toolbar-row {
+    .header-top {
       display: flex;
-      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      padding: 10px 16px;
       gap: 10px;
     }
 
-    .toolbar-group {
+    .app-brand {
       display: flex;
       align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-      background: rgba(255,255,255,0.03);
-      padding: 5px 10px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.06);
+      gap: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent-red);
+      border-radius: 50%;
     }
 
-    .toolbar-label {
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: #9ca3af;
-      font-weight: 700;
-      margin-right: 4px;
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+
+    /* ПОЛОСА ПЕРЕКЛЮЧЕНИЯ СТРАНИЦ */
+    .pages-scroll-bar {
+      display: flex;
+      gap: 6px;
+      padding: 6px 14px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pages-scroll-bar::-webkit-scrollbar { display: none; }
 
     .btn {
-      background: #222631;
+      background: #1e222d;
       color: #e5e7eb;
-      border: 1px solid #343a4a;
-      padding: 6px 11px;
-      border-radius: 8px;
-      font-size: 11.5px;
+      border: 1px solid #2f3545;
+      padding: 7px 12px;
+      border-radius: 9px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: 0.15s;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      white-space: nowrap;
+      transition: 0.15s;
     }
-    .btn:hover { background: #2e3444; color: #fff; }
+    .btn:active { transform: scale(0.96); }
     .btn.active-tab { background: var(--accent-red); border-color: var(--accent-red); color: #fff; }
     .btn-primary {
       background: linear-gradient(135deg, #e5202a 0%, #b31219 100%);
       border-color: #e5202a;
       color: #fff;
     }
-    .btn-danger {
-      background: #3a1d22;
-      border-color: #6e2a33;
-      color: #fca5a5;
-    }
-    .btn-danger:hover { background: #dc2626; color: #fff; }
 
+    /* ДЕСКТОПНАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ */
+    .desktop-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #141720;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .toolbar-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+      font-weight: 700;
+      margin-right: 4px;
+    }
     .control-item {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-size: 11px;
       color: #d1d5db;
     }
     .control-item input[type="range"] {
-      width: 72px;
+      width: 70px;
       accent-color: var(--accent-red);
-      cursor: pointer;
     }
     .badge-val {
       background: #2b3140;
@@ -156,17 +190,17 @@
       border-radius: 5px;
       font-weight: 700;
       color: #fff;
-      min-width: 28px;
-      text-align: center;
+      font-size: 11px;
     }
 
-    /* РАБОЧАЯ ОБЛАСТЬ */
+    /* РАБОЧАЯ ОБЛАСТЬ (WORKSPACE) */
     .workspace {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 36px;
-      padding: 30px 20px;
+      gap: 24px;
+      padding: 16px 8px;
+      width: 100%;
       overflow-x: auto;
     }
 
@@ -174,26 +208,41 @@
       display: none;
       flex-direction: column;
       gap: 8px;
+      width: 100%;
+      align-items: center;
     }
     .page-wrapper.visible { display: flex; }
 
     .page-caption {
       color: #9ca3af;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 600;
       display: flex;
       justify-content: space-between;
+      width: 100%;
+      max-width: 1280px;
       padding: 0 8px;
     }
 
-    /* ===================================================================== */
-    /* СЕТКА БЕЗ СВЯЗИ ВЫСОТ МЕЖДУ СОСЕДНИМИ БЛОКАМИ                        */
-    /* ===================================================================== */
+    /* КОНТЕЙНЕР МАСШТАБИРОВАНИЯ ХОЛСТА ПОД ЭКРАН */
+    .canvas-scale-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      overflow: visible;
+    }
+
+    .canvas-scale-wrapper {
+      transform-origin: top center;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* БЕНТО-ХОЛСТ (ФИКСИРОВАННЫЙ АЛЬБОМНЫЙ ФОРМАТ ДЛЯ PDF) */
     .banner-canvas {
       width: 1280px;
       min-height: 820px;
       background: var(--canvas-bg);
-      border-radius: 30px;
+      border-radius: 28px;
       padding: 24px;
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -203,33 +252,18 @@
       position: relative;
       border: 1px solid #ffffff;
       align-content: start;
-      align-items: start; /* Устраняет принудительное растягивание блоков по высоте соседей */
+      align-items: start;
     }
 
-    .banner-canvas.show-grid-guides::before {
-      content: "";
-      position: absolute;
-      inset: 24px;
-      pointer-events: none;
-      z-index: 0;
-      background-image: repeating-linear-gradient(
-        to right,
-        rgba(217, 27, 36, 0.06) 0,
-        rgba(217, 27, 36, 0.06) calc((100% - 11 * 16px) / 12),
-        transparent calc((100% - 11 * 16px) / 12),
-        transparent calc(((100% - 11 * 16px) / 12) + 16px)
-      );
-      border-radius: 16px;
-    }
-
-    /* Каждый блок строго независим */
+    /* БЛОКИ BENTO */
     .bento-item {
       position: relative;
       z-index: 2;
-      transition: box-shadow 0.15s, border-color 0.15s, transform 0.12s;
+      transition: box-shadow 0.15s, border-color 0.15s;
       overflow: hidden;
-      align-self: start; /* Изолированная высота каждого блока */
+      align-self: start;
       height: auto;
+      border-radius: var(--radius-lg);
     }
     .bento-item[data-span="1"]  { grid-column: span 1; }
     .bento-item[data-span="2"]  { grid-column: span 2; }
@@ -244,24 +278,12 @@
     .bento-item[data-span="11"] { grid-column: span 11; }
     .bento-item[data-span="12"] { grid-column: span 12; }
 
-    /* Выделенный блок и Drag & Drop */
     .bento-item.selected-block {
-      outline: 2.5px solid var(--accent-red);
-      outline-offset: 2px;
-    }
-
-    .bento-item.dragging-source {
-      opacity: 0.4;
-      transform: scale(0.98);
-    }
-
-    .bento-item.drag-over-target {
-      outline: 3px dashed var(--accent-red) !important;
+      outline: 3px solid var(--accent-red) !important;
       outline-offset: 3px;
-      background-color: #fff5f5 !important;
     }
 
-    /* ПАНЕЛЬ УПРАВЛЕНИЯ БЛОКОМ */
+    /* ПАНЕЛЬ УПРАВЛЕНИЯ НА КАРТОЧКЕ */
     .block-ui-bar {
       position: absolute;
       top: 8px;
@@ -269,7 +291,7 @@
       display: flex;
       align-items: center;
       gap: 4px;
-      background: rgba(16, 18, 23, 0.88);
+      background: rgba(16, 18, 23, 0.9);
       backdrop-filter: blur(6px);
       padding: 4px 7px;
       border-radius: 9px;
@@ -277,11 +299,9 @@
       opacity: 0;
       transition: opacity 0.15s;
       color: #fff;
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
     }
-
     .bento-item:hover .block-ui-bar,
     .bento-item.selected-block .block-ui-bar {
       opacity: 1;
@@ -289,93 +309,249 @@
 
     .drag-handle {
       cursor: grab;
-      padding: 2px 5px;
+      padding: 2px 6px;
       color: #fca5a5;
       font-size: 13px;
-      line-height: 1;
-      border-right: 1px solid rgba(255,255,255,0.18);
-      margin-right: 2px;
+      border-right: 1px solid rgba(255,255,255,0.2);
     }
-    .drag-handle:active { cursor: grabbing; }
-
     .mini-ui-btn {
-      background: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.15);
       border: none;
       color: #fff;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 5px;
+      font-size: 12px;
       cursor: pointer;
-      font-size: 11px;
-      font-weight: 700;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
     }
-    .mini-ui-btn:hover { background: var(--accent-red); }
-
-    .span-indicator {
-      padding: 0 4px;
-      color: #e5e7eb;
-      font-variant-numeric: tabular-nums;
-    }
+    .mini-ui-btn:active { background: var(--accent-red); }
 
     /* РУЧКИ РЕСАЙЗА */
+    .resize-handle-e, .resize-handle-s, .resize-handle-se {
+      position: absolute;
+      z-index: 25;
+      background: transparent;
+    }
     .resize-handle-e {
-      position: absolute;
-      top: 14px;
-      bottom: 14px;
-      right: 0;
-      width: 9px;
-      cursor: ew-resize;
-      z-index: 25;
-      background: transparent;
-      transition: background 0.15s;
-      border-radius: 4px 0 0 4px;
+      top: 14px; bottom: 14px; right: 0; width: 10px; cursor: ew-resize;
     }
-    .bento-item:hover .resize-handle-e:hover,
-    .bento-item.resizing-now .resize-handle-e {
-      background: rgba(217, 27, 36, 0.45);
-    }
-
     .resize-handle-s {
-      position: absolute;
-      left: 14px;
-      right: 14px;
-      bottom: 0;
-      height: 9px;
-      cursor: ns-resize;
-      z-index: 25;
-      background: transparent;
-      transition: background 0.15s;
+      left: 14px; right: 14px; bottom: 0; height: 10px; cursor: ns-resize;
     }
-    .bento-item:hover .resize-handle-s:hover,
-    .bento-item.resizing-now .resize-handle-s {
-      background: rgba(217, 27, 36, 0.45);
+    .resize-handle-se {
+      right: 0; bottom: 0; width: 22px; height: 22px; cursor: nwse-resize;
+      display: flex; align-items: flex-end; justify-content: flex-end;
+      padding: 3px; color: #9ca3af; font-size: 11px;
     }
 
-    .resize-handle-se {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 20px;
-      height: 20px;
-      cursor: nwse-resize;
-      z-index: 28;
+    /* СТИЛИ КАРТОЧЕК */
+    .bento-card {
+      background: var(--card-white);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 4px 18px rgba(16, 24, 40, 0.03);
       display: flex;
-      align-items: flex-end;
-      justify-content: flex-end;
-      padding: 3px;
-      color: rgba(156, 163, 175, 0.7);
-      font-size: 10px;
-      opacity: 0;
-      transition: opacity 0.15s;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
     }
-    .bento-item:hover .resize-handle-se,
-    .bento-item.selected-block .resize-handle-se {
-      opacity: 1;
+    .bento-card.theme-gray { background: var(--card-gray); border-color: transparent; }
+    .bento-card.theme-red, .red-feature-card {
+      background: radial-gradient(circle at 85% 20%, #ff4750 0%, #c8141d 55%, #85070d 100%);
+      color: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
-    .resize-handle-se:hover { color: var(--accent-red); }
+    .bento-card.theme-red * { color: #fff !important; }
+    .bento-card.theme-dark, .dark-feature-card {
+      background: linear-gradient(145deg, #232733 0%, #14171f 100%);
+      color: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 22px 26px;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .bento-card.theme-dark * { color: #fff !important; }
+
+    .red-sphere {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ff858b, #b00c14 75%);
+      box-shadow: inset -6px -6px 16px rgba(0,0,0,0.4), 0 10px 22px rgba(0,0,0,0.28);
+      flex-shrink: 0;
+    }
+
+    .pill-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .pill-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--card-gray); color: var(--text-muted);
+      font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: var(--radius-pill);
+    }
+    .pill-tag-red {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-red); color: #fff;
+      font-size: 11px; font-weight: 600; padding: 5px 13px; border-radius: var(--radius-pill);
+    }
+    .deco-pill-red {
+      width: 42px; height: 21px; background: var(--accent-red); border-radius: var(--radius-pill);
+      position: relative; display: inline-flex; align-items: center; padding: 3px; flex-shrink: 0;
+    }
+    .deco-pill-red::after {
+      content: ""; width: 15px; height: 15px; background: #fff; border-radius: 50%; margin-left: auto;
+    }
+    .deco-dot-red {
+      width: 10px; height: 10px; background: var(--accent-red); border-radius: 50%; display: inline-block; flex-shrink: 0;
+    }
+
+    .logo-slot {
+      background: var(--card-white); border-radius: var(--radius-lg); border: 2px dashed #e0b4b7;
+      min-height: 96px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 12px 18px;
+    }
+    .logo-slot.has-logo { border-style: solid; border-color: var(--border-soft); }
+    .logo-placeholder { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+    .logo-placeholder span { display: block; color: var(--accent-red); font-weight: 700; font-size: 12.5px; margin-bottom: 2px; }
+    .logo-preview-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
+
+    .h2-title { font-size: 20px; font-weight: 700; color: var(--text-main); line-height: 1.25; }
+    .h3-title { font-size: 15.5px; font-weight: 700; color: var(--text-main); line-height: 1.3; }
+    .body-sm { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; font-weight: 500; }
+    .big-metric { font-size: 34px; font-weight: 800; color: var(--accent-red); line-height: 1.1; letter-spacing: -0.02em; }
+
+    .products-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px 12px; width: 100%; }
+    .product-item {
+      background: var(--card-gray); border-radius: 12px; padding: 9px 12px;
+      display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600;
+      color: var(--text-main); line-height: 1.3; position: relative;
+    }
+    .product-item[data-p-span="2"], .product-item.highlight-full { grid-column: span 2; }
+    .product-item.highlight-full {
+      background: linear-gradient(135deg, #d91b24 0%, #990d14 100%); color: #fff; padding: 11px 16px;
+    }
+    .product-item.highlight-full .deco-dot-red { background: #fff; }
+
+    .prod-item-tools {
+      margin-left: auto; display: inline-flex; align-items: center; gap: 3px; opacity: 0;
+    }
+    .product-item:hover .prod-item-tools { opacity: 1; }
+    .prod-tool-btn {
+      background: rgba(16, 18, 23, 0.7); color: #fff; border: none; border-radius: 4px;
+      padding: 2px 6px; font-size: 10px; cursor: pointer;
+    }
+
+    .contacts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .contact-box { background: var(--card-gray); border-radius: 14px; padding: 11px 14px; display: flex; align-items: center; gap: 11px; }
+    .contact-icon {
+      width: 36px; height: 36px; border-radius: 10px; background: var(--accent-red);
+      color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; flex-shrink: 0;
+    }
+    .contact-lines { font-size: 12.5px; font-weight: 600; line-height: 1.4; color: var(--text-main); }
+
+    /* ФОТО КАРТОЧКА */
+    .photo-card {
+      position: relative; border-radius: var(--radius-lg); overflow: hidden;
+      background: #1e222d; border: 1px solid var(--border-soft); cursor: grab; touch-action: none;
+    }
+    .photo-card img {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover; object-position: center; pointer-events: none; transform-origin: center center;
+    }
+    .photo-badge-top {
+      position: absolute; top: 12px; left: 12px; background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px); padding: 5px 12px; border-radius: var(--radius-pill);
+      font-size: 11px; font-weight: 700; color: var(--text-main); z-index: 5;
+    }
+    .photo-inline-controls {
+      position: absolute; bottom: 10px; left: 10px; right: 10px;
+      display: flex; align-items: center; gap: 5px; z-index: 10;
+      background: rgba(16, 18, 23, 0.88); backdrop-filter: blur(8px);
+      padding: 5px 8px; border-radius: 10px; opacity: 0; transition: opacity 0.2s;
+    }
+    .photo-card:hover .photo-inline-controls,
+    .photo-card.active-photo .photo-inline-controls { opacity: 1; }
+    .photo-ctrl-btn {
+      background: rgba(255, 255, 255, 0.15); border: none; color: #fff;
+      padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    }
+    .photo-ctrl-hint { font-size: 10px; color: #9ca3af; margin-left: auto; }
+
+    .step-badge {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--accent-red);
+      color: #fff; font-weight: 700; font-size: 12.5px; display: inline-flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    /* МОБИЛЬНАЯ НИЖНЯЯ ПАНЕЛЬ ДЕЙСТВИЙ (BOTTOM SHEET / ACTION BAR) */
+    .mobile-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #14161f;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 14px calc(12px + var(--safe-bottom));
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 -8px 30px rgba(0,0,0,0.65);
+    }
+    .mobile-bottom-bar.active { display: flex; }
+
+    .mobile-bar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .mobile-bar-row::-webkit-scrollbar { display: none; }
+
+    .mobile-tool-btn {
+      background: #232735;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .mobile-tool-btn:active { background: var(--accent-red); }
+
+    /* МЕНЮ ЭКСПОРТА НА МОБИЛЬНЫХ */
+    .export-dropdown {
+      position: fixed;
+      top: 60px;
+      right: 14px;
+      background: #1c202c;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 3000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    }
+    .export-dropdown.open { display: flex; }
 
     /* ОЧИСТКА ПРИ ЭКСПОРТЕ */
     .banner-canvas.exporting-clean {
@@ -390,467 +566,127 @@
     .banner-canvas.exporting-clean .prod-item-tools {
       display: none !important;
     }
-    .banner-canvas.exporting-clean .bento-item {
-      outline: none !important;
-    }
+    .banner-canvas.exporting-clean .bento-item { outline: none !important; }
     .banner-canvas.exporting-clean .logo-slot:not(.has-logo) {
-      border-color: transparent !important;
-      background: var(--card-white) !important;
+      border-color: transparent !important; background: var(--card-white) !important;
     }
     .banner-canvas.exporting-clean .logo-slot:not(.has-logo) .logo-placeholder {
       display: none !important;
     }
 
-    /* ТЕМАТИЧЕСКИЕ КАРТОЧКИ */
-    .bento-card {
-      background: var(--card-white);
-      border-radius: var(--radius-lg);
-      padding: 20px 24px;
-      border: 1px solid var(--border-soft);
-      box-shadow: 0 4px 18px rgba(16, 24, 40, 0.03);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .bento-card.theme-gray {
-      background: var(--card-gray);
-      border-color: transparent;
-    }
-
-    .bento-card.theme-red,
-    .red-feature-card {
-      background: radial-gradient(circle at 85% 20%, #ff4750 0%, #c8141d 55%, #85070d 100%);
-      color: #ffffff;
-      border-radius: var(--radius-lg);
-      padding: 20px 24px;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .bento-card.theme-red .h2-title,
-    .bento-card.theme-red .h3-title,
-    .bento-card.theme-red .body-sm,
-    .bento-card.theme-red .big-metric {
-      color: #ffffff !important;
-    }
-
-    .bento-card.theme-dark,
-    .dark-feature-card {
-      background: linear-gradient(145deg, #232733 0%, #14171f 100%);
-      color: #ffffff;
-      border-radius: var(--radius-lg);
-      padding: 22px 26px;
-      border: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-    }
-    .bento-card.theme-dark .h2-title,
-    .bento-card.theme-dark .h3-title,
-    .bento-card.theme-dark .body-sm {
-      color: #ffffff !important;
-    }
-
-    /* ОБЪЕМНАЯ СФЕРА */
-    .red-sphere {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #ff858b, #b00c14 75%);
-      box-shadow: inset -6px -6px 16px rgba(0,0,0,0.4), 0 10px 22px rgba(0,0,0,0.28);
-      flex-shrink: 0;
-    }
-
-    /* ДЕКОРАТИВНЫЕ ЭЛЕМЕНТЫ */
-    .pill-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .pill-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--card-gray);
-      color: var(--text-muted);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 5px 12px;
-      border-radius: var(--radius-pill);
-    }
-
-    .pill-tag-red {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--accent-red);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 5px 13px;
-      border-radius: var(--radius-pill);
-    }
-
-    .deco-pill-red {
-      width: 42px;
-      height: 21px;
-      background: var(--accent-red);
-      border-radius: var(--radius-pill);
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      padding: 3px;
-      flex-shrink: 0;
-    }
-    .deco-pill-red::after {
-      content: "";
-      width: 15px;
-      height: 15px;
-      background: #fff;
-      border-radius: 50%;
-      margin-left: auto;
-    }
-
-    .deco-dot-red {
-      width: 10px;
-      height: 10px;
-      background: var(--accent-red);
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }
-
-    /* СЛОТ ДЛЯ ЛОГОТИПА */
-    .logo-slot {
-      background: var(--card-white);
-      border-radius: var(--radius-lg);
-      border: 2px dashed #e0b4b7;
-      min-height: 96px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 12px 18px;
-    }
-    .logo-slot:hover { border-color: var(--accent-red); background: #fffafa; }
-    .logo-slot.has-logo { border-style: solid; border-color: var(--border-soft); }
-
-    .logo-placeholder {
-      text-align: center;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--text-muted);
-      line-height: 1.35;
-    }
-    .logo-placeholder span {
-      display: block;
-      color: var(--accent-red);
-      font-weight: 700;
-      font-size: 12.5px;
-      margin-bottom: 2px;
-    }
-    .logo-preview-img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      display: none;
-    }
-
-    /* ТИПОГРАФИКА */
-    .h2-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.25;
-    }
-    .h3-title {
-      font-size: 15.5px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.3;
-    }
-    .body-sm {
-      font-size: 12.5px;
-      color: var(--text-muted);
-      line-height: 1.45;
-      font-weight: 500;
-    }
-    .big-metric {
-      font-size: 34px;
-      font-weight: 800;
-      color: var(--accent-red);
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-    }
-
-    /* СПИСОК ТЕХНИКИ */
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 9px 12px;
-      width: 100%;
-    }
-
-    .product-item {
-      background: var(--card-gray);
-      border-radius: 12px;
-      padding: 9px 12px;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-main);
-      line-height: 1.3;
-      border: 1px solid transparent;
-      position: relative;
-      grid-column: span 1;
-    }
-    .product-item[data-p-span="2"],
-    .product-item.highlight-full {
-      grid-column: span 2;
-    }
-    .product-item.highlight-full {
-      background: linear-gradient(135deg, #d91b24 0%, #990d14 100%);
-      color: #ffffff;
-      padding: 11px 16px;
-      font-size: 12.5px;
-    }
-    .product-item.highlight-full .deco-dot-red { background: #ffffff; }
-
-    .prod-item-tools {
-      margin-left: auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      opacity: 0;
-      transition: opacity 0.15s;
-      flex-shrink: 0;
-    }
-    .product-item:hover .prod-item-tools { opacity: 1; }
-
-    .prod-tool-btn {
-      background: rgba(16, 18, 23, 0.7);
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 2px 5px;
-      font-size: 10px;
-      cursor: pointer;
-    }
-    .prod-tool-btn:hover { background: var(--accent-red); }
-
-    /* КОНТАКТЫ */
-    .contacts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 12px;
-    }
-    .contact-box {
-      background: var(--card-gray);
-      border-radius: 14px;
-      padding: 11px 14px;
-      display: flex;
-      align-items: center;
-      gap: 11px;
-    }
-    .contact-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--accent-red);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 15px;
-      flex-shrink: 0;
-    }
-    .contact-lines {
-      font-size: 12.5px;
-      font-weight: 600;
-      line-height: 1.4;
-      color: var(--text-main);
-    }
-
-    /* ===================================================================== */
-    /* ФОТОКАРТОЧКА: ЗАФИКСИРОВАННЫЕ ПРОПОРЦИИ И ИНЛАЙН-РЕДАКТИРОВАНИЕ       */
-    /* ===================================================================== */
-    .photo-card {
-      position: relative;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      background: #1e222d;
-      border: 1px solid var(--border-soft);
-      cursor: grab;
-      user-select: none;
-    }
-    .photo-card:active {
-      cursor: grabbing;
-    }
-
-    /* Изображение строго удерживает пропорции без сплющивания и растяжения */
-    .photo-card img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* Сохраняет реальные пропорции фото */
-      object-position: center;
-      pointer-events: none;
-      transform-origin: center center;
-      will-change: transform;
-    }
-
-    .photo-badge-top {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(8px);
-      padding: 5px 12px;
-      border-radius: var(--radius-pill);
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-main);
-      z-index: 5;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      cursor: text;
-    }
-
-    /* Инлайн-панель редактирования фото прямо внутри блока */
-    .photo-inline-controls {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      z-index: 10;
-      background: rgba(16, 18, 23, 0.88);
-      backdrop-filter: blur(8px);
-      padding: 5px 8px;
-      border-radius: 10px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .photo-card:hover .photo-inline-controls,
-    .photo-card.active-photo .photo-inline-controls {
-      opacity: 1;
-    }
-
-    .photo-ctrl-btn {
-      background: rgba(255, 255, 255, 0.15);
-      border: none;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .photo-ctrl-btn:hover { background: var(--accent-red); }
-    .photo-ctrl-hint {
-      font-size: 10px;
-      color: #9ca3af;
-      margin-left: auto;
-      pointer-events: none;
-    }
-
-    .step-badge {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--accent-red);
-      color: #fff;
-      font-weight: 700;
-      font-size: 12.5px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    [contenteditable="true"] {
-      user-select: text;
-      cursor: text;
-    }
-    [contenteditable="true"]:focus {
-      outline: 2px solid var(--accent-red);
-      outline-offset: 2px;
-      border-radius: 4px;
-      background: rgba(217, 27, 36, 0.05);
+    /* АДАПТИВНОСТЬ ПОД ЭКРАНЫ СМАРТФОНОВ И ПЛАНШЕТОВ */
+    @media (max-width: 992px) {
+      .desktop-toolbar { display: none !important; }
+      .app-brand span { display: none; }
+      .page-caption { font-size: 10px; }
+      .workspace { padding: 12px 4px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ОВЕРЛЕЙ ЭКСПОРТА В PDF -->
+  <!-- ОВЕРЛЕЙ ЭКСПОРТА -->
   <div class="pdf-Export-Overlay" id="pdfOverlay">
     <div class="spinner"></div>
-    <div style="font-size:16px; font-weight:700;" id="pdfStatusText">Генерация многостраничного PDF...</div>
-    <div style="font-size:13px; color:#9ca3af;">Все рамки конструктора и инлайн-панели скрыты</div>
+    <div style="font-size:16px; font-weight:700;" id="pdfStatusText">Генерация PDF...</div>
+    <div style="font-size:12px; color:#9ca3af;">Формируется высокое качество 1280×820 px</div>
   </div>
 
-  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-  <div class="toolbar">
-    <div class="toolbar-row">
-      <div class="toolbar-group">
-        <span class="toolbar-label">Страницы КП:</span>
-        <button class="btn active-tab page-tab" onclick="showPage(1, this)">1. Обложка</button>
-        <button class="btn page-tab" onclick="showPage(2, this)">2. ПАРМ и АРОК</button>
-        <button class="btn page-tab" onclick="showPage(3, this)">3. Вахтовки и КМУ</button>
-        <button class="btn page-tab" onclick="showPage(4, this)">4. Завод и ОТК</button>
-        <button class="btn page-tab" onclick="showPage(5, this)">5. Этапы ТЗ и Лизинг</button>
-        <button class="btn page-tab" onclick="showPage(6, this)">6. Контакты</button>
-        <button class="btn page-tab" onclick="showPage('all', this)">Все страницы</button>
+  <!-- ВЕРХНЯЯ ШАПКА -->
+  <header class="header-bar">
+    <div class="header-top">
+      <div class="app-brand">
+        <div class="brand-dot"></div>
+        <span>Конструктор КП</span>
       </div>
 
-      <div class="toolbar-group">
-        <span class="toolbar-label">Экспорт:</span>
-        <button class="btn btn-primary" onclick="exportFullPDF()">📄 Скачать всё КП (PDF, 6 стр.)</button>
-        <button class="btn" onclick="exportSinglePagePDF()">Текущая стр. (PDF)</button>
-        <button class="btn" onclick="exportCurrentOrAllPNG()">Скачать PNG</button>
+      <div class="header-actions">
+        <!-- Кнопка переключения масштаба (По экрану / 1:1) -->
+        <button class="btn" id="scaleToggleBtn" onclick="toggleCanvasScaleMode()">
+          📱 По экрану
+        </button>
+
+        <!-- Кнопка меню экспорта -->
+        <button class="btn btn-primary" onclick="toggleExportMenu()">
+          📄 Экспорт ▾
+        </button>
       </div>
     </div>
 
-    <div class="toolbar-row">
+    <!-- Полоса слайдов / страниц -->
+    <div class="pages-scroll-bar">
+      <button class="btn active-tab page-tab" onclick="showPage(1, this)">1. Обложка</button>
+      <button class="btn page-tab" onclick="showPage(2, this)">2. ПАРМ и АРОК</button>
+      <button class="btn page-tab" onclick="showPage(3, this)">3. Вахтовки</button>
+      <button class="btn page-tab" onclick="showPage(4, this)">4. Завод</button>
+      <button class="btn page-tab" onclick="showPage(5, this)">5. Лизинг</button>
+      <button class="btn page-tab" onclick="showPage(6, this)">6. Контакты</button>
+      <button class="btn page-tab" onclick="showPage('all', this)">Все (6)</button>
+    </div>
+
+    <!-- Десктопная панель управления (автоматически скрыта на телефонах) -->
+    <div class="desktop-toolbar">
       <div class="toolbar-group">
-        <span class="toolbar-label">Выбранный блок:</span>
-        <div class="control-item" title="Ширина текущего блока независимо от других">
-          <span>Ширина (кол.):</span>
+        <span class="toolbar-label">Блок:</span>
+        <div class="control-item">
+          <span>Ширина:</span>
           <input type="range" id="blockSpanRange" min="1" max="12" step="1" value="6" oninput="setSelectedBlockSpan(this.value)">
           <span class="badge-val" id="blockSpanBadge">6/12</span>
         </div>
-        <div class="control-item" title="Высота только текущего блока (не влияет на соседей)">
-          <span>Высота (px):</span>
+        <div class="control-item">
+          <span>Высота:</span>
           <input type="range" id="blockHeightRange" min="80" max="600" step="10" value="140" oninput="setSelectedBlockHeight(this.value)">
           <span class="badge-val" id="blockHeightBadge">Авто</span>
         </div>
-        <button class="btn" onclick="cycleBlockTheme()" title="Цвет карточки">🎨 Стиль блока</button>
-        <button class="btn" onclick="addNewBlockToCurrentPage('card')">+ Текстовый блок</button>
-        <button class="btn" onclick="addNewBlockToCurrentPage('photo')">+ Фото-блок</button>
-        <button class="btn" onclick="duplicateSelectedBlock()">Копия</button>
-        <button class="btn btn-danger" onclick="deleteSelectedBlock()">Удалить</button>
+        <button class="btn" onclick="cycleBlockTheme()">🎨 Стиль</button>
+        <button class="btn" onclick="addNewBlockToCurrentPage('card')">+ Текст</button>
+        <button class="btn" onclick="addNewBlockToCurrentPage('photo')">+ Фото</button>
+        <button class="btn" onclick="duplicateSelectedBlock()">📋 Копия</button>
+        <button class="btn" style="color:#fca5a5;" onclick="deleteSelectedBlock()">🗑️</button>
       </div>
 
       <div class="toolbar-group">
-        <span class="toolbar-label">Быстрые действия:</span>
         <button class="btn" onclick="document.getElementById('logoInput').click()">Логотип</button>
         <button class="btn" onclick="addProductItem()">+ Пункт техники</button>
       </div>
+    </div>
+  </header>
+
+  <!-- ВСПЛЫВАЮЩЕЕ МЕНЮ ЭКСПОРТА -->
+  <div class="export-dropdown" id="exportMenu">
+    <button class="btn btn-primary" onclick="exportFullPDF(); toggleExportMenu();">📄 Скачать всё КП (PDF, 6 стр.)</button>
+    <button class="btn" onclick="exportSinglePagePDF(); toggleExportMenu();">Текущая стр. (PDF)</button>
+    <button class="btn" onclick="exportCurrentOrAllPNG(); toggleExportMenu();">Скачать PNG слайд</button>
+  </div>
+
+  <!-- МОБИЛЬНАЯ НИЖНЯЯ ПАНЕЛЬ УПРАВЛЕНИЯ ВЫБРАННЫМ БЛОКОМ -->
+  <div class="mobile-bottom-bar" id="mobileBottomBar">
+    <div class="mobile-bar-row">
+      <span style="font-size:11px; font-weight:700; color:#9ca3af;" id="mobileBlockName">Выбранный блок</span>
+      <div style="display:flex; gap:6px;">
+        <button class="mobile-tool-btn" onclick="moveBlockUpDown(-1)" title="Сдвинуть выше">▲ Выше</button>
+        <button class="mobile-tool-btn" onclick="moveBlockUpDown(1)" title="Сдвинуть ниже">▼ Ниже</button>
+        <button class="mobile-tool-btn" style="color:#fca5a5;" onclick="deleteSelectedBlock()">✕ Удалить</button>
+      </div>
+    </div>
+
+    <div class="mobile-bar-row">
+      <!-- Управление шириной в колонках -->
+      <button class="mobile-tool-btn" onclick="changeBlockSpanDelta(selectedBlock, -1)">Ширина −</button>
+      <span class="badge-val" id="mobileSpanVal" style="font-size:12px; padding:4px 8px;">6 / 12</span>
+      <button class="mobile-tool-btn" onclick="changeBlockSpanDelta(selectedBlock, 1)">Ширина ＋</button>
+
+      <!-- Управление стилем и копированием -->
+      <button class="mobile-tool-btn" onclick="cycleBlockTheme()">🎨 Стиль</button>
+      <button class="mobile-tool-btn" onclick="duplicateSelectedBlock()">📋 Копия</button>
+    </div>
+
+    <!-- Доп. кнопки для фото (если выбран фото-блок) -->
+    <div class="mobile-bar-row" id="mobilePhotoTools" style="display:none; border-top:1px solid rgba(255,255,255,0.08); padding-top:6px;">
+      <button class="mobile-tool-btn" onclick="triggerActivePhotoUpload()">📷 Заменить фото</button>
+      <button class="mobile-tool-btn" onclick="mobileAdjustPhotoZoom(0.15)">Зум ＋</button>
+      <button class="mobile-tool-btn" onclick="mobileAdjustPhotoZoom(-0.15)">Зум −</button>
+      <button class="mobile-tool-btn" onclick="mobileResetPhoto()">⟲ Сброс</button>
     </div>
   </div>
 
@@ -858,608 +694,364 @@
   <input type="file" id="logoInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
   <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
 
+  <!-- РАБОЧАЯ ОБЛАСТЬ -->
   <div class="workspace">
 
-    <!-- ================================================================= -->
-    <!-- СТРАНИЦА 1: ОБЛОЖКА                                               -->
-    <!-- ================================================================= -->
+    <!-- СТРАНИЦА 1: ОБЛОЖКА -->
     <div class="page-wrapper visible" id="pageWrap1">
       <div class="page-caption">
-        <span>СТРАНИЦА 01 / КАЖДЫЙ БЛОК РЕДАКТИРУЕТСЯ НЕЗАВИСИМО. ПЕРЕМЕЩАЙТЕ И МАСШТАБИРУЙТЕ ФОТО ПРЯМО В БЛОКЕ</span>
-        <span>Пропорции фото строго зафиксированы</span>
+        <span>СТРАНИЦА 01 / ТАПНИТЕ ПО БЛОКУ ДЛЯ РЕДАКТИРОВАНИЯ</span>
+        <span>Альбомный формат 1280×820</span>
       </div>
-      <div class="banner-canvas" id="pageCanvas1">
+      <div class="canvas-scale-container">
+        <div class="canvas-scale-wrapper">
+          <div class="banner-canvas" id="pageCanvas1">
 
-        <div class="bento-item logo-slot" data-span="3" style="min-height: 105px;" onclick="selectBlock(this)">
-          <div class="logo-placeholder" onclick="document.getElementById('logoInput').click()">
-            <span>+ ВАШ ЛОГОТИП</span>
-            Прямоугольный формат<br>(кликните для загрузки)
-          </div>
-          <img class="logo-preview-img" alt="Логотип" onclick="document.getElementById('logoInput').click()">
-        </div>
-
-        <div class="bento-item bento-card" data-span="4" style="min-height: 105px;">
-          <div class="pill-row">
-            <div class="pill-tag" contenteditable="true">Официальный представитель</div>
-            <div class="deco-pill-red"></div>
-          </div>
-          <div class="h3-title" contenteditable="true">
-            Готовы изготовить и поставить по вашему ТЗ следующую спецтехнику:
-          </div>
-        </div>
-
-        <div class="bento-item photo-card active-photo" data-span="5" style="min-height: 310px;" data-slot="p1_1">
-          <div class="photo-badge-top" contenteditable="true">Вахтовые автобусы и спецфургоны</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80" alt="Спецтехника">
-        </div>
-
-        <div class="bento-item bento-card" data-span="7" style="min-height: 450px;">
-          <div class="products-grid" id="productsGrid">
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Вахтовые автобусы КАМАЗ, УРАЛ, IVECO</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Грузопассажирские автомобили (ГПА кат.С)</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Агрегат ремонта и обслуживания станков-качалок (АРОК)</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Агрегат ремонта водоводов (АНРВ)</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Передвижная авторемонтная мастерская (ПАРМ)</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Лаборатории различного назначения</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Автофургоны хозяйственных нужд</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Транспортно-бытовые автомобили (ТБМ)</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Агрегат ремонтно-сварочный (АРС)</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Передвижные маслостанции</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Машины для взрывчатых веществ</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Бортовые автомобили с кранами-манипуляторами</span></div>
-            <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Автоцистерны и полуприцепы</span></div>
-            <div class="product-item highlight-full" data-p-span="2">
-              <span class="deco-dot-red"></span>
-              <span contenteditable="true">Специальный и технологический транспорт для повышения нефтегазоотдачи</span>
+            <div class="bento-item logo-slot" data-span="3" style="min-height: 105px;" onclick="selectBlock(this)">
+              <div class="logo-placeholder" onclick="document.getElementById('logoInput').click()">
+                <span>+ ВАШ ЛОГОТИП</span>
+                Формат логотипа<br>(кликните для загрузки)
+              </div>
+              <img class="logo-preview-img" alt="Логотип" onclick="document.getElementById('logoInput').click()">
             </div>
-          </div>
-        </div>
 
-        <div class="bento-item photo-card" data-span="2" style="min-height: 215px;" data-slot="p1_2">
-          <div class="photo-badge-top" contenteditable="true">КМУ</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80" alt="Спецтехника">
-        </div>
-
-        <div class="bento-item photo-card" data-span="3" style="min-height: 215px;" data-slot="p1_3">
-          <div class="photo-badge-top" contenteditable="true">Автоцистерны</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80" alt="Спецтехника">
-        </div>
-
-        <div class="bento-item bento-card" data-span="7" style="min-height: 155px;">
-          <div class="pill-row">
-            <div class="h3-title" style="font-size:13.5px;" contenteditable="true">Свяжитесь с нами для получения дополнительной информации!</div>
-            <div class="deco-dot-red"></div>
-          </div>
-          <div class="contacts-grid">
-            <div class="contact-box">
-              <div class="contact-icon">✆</div>
-              <div class="contact-lines" contenteditable="true">
-                +7 (950) 74-98-781<br>
-                +7 (3513) 289-770 — Алексей
+            <div class="bento-item bento-card" data-span="4" style="min-height: 105px;">
+              <div class="pill-row">
+                <div class="pill-tag" contenteditable="true">Официальный представитель</div>
+                <div class="deco-pill-red"></div>
+              </div>
+              <div class="h3-title" contenteditable="true">
+                Готовы изготовить и поставить по вашему ТЗ следующую спецтехнику:
               </div>
             </div>
-            <div class="contact-box">
-              <div class="contact-icon">✉</div>
-              <div class="contact-lines" contenteditable="true">
-                asv74miass@yandex.ru<br>
-                www.asv74.com
+
+            <div class="bento-item photo-card active-photo" data-span="5" style="min-height: 310px;" data-slot="p1_1">
+              <div class="photo-badge-top" contenteditable="true">Вахтовые автобусы и спецфургоны</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80" alt="Спецтехника">
+            </div>
+
+            <div class="bento-item bento-card" data-span="7" style="min-height: 450px;">
+              <div class="products-grid" id="productsGrid">
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Вахтовые автобусы КАМАЗ, УРАЛ, IVECO</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Грузопассажирские автомобили (ГПА кат.С)</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Агрегат ремонта и обслуживания станков-качалок (АРОК)</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Агрегат ремонта водоводов (АНРВ)</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Передвижная авторемонтная мастерская (ПАРМ)</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Лаборатории различного назначения</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Автофургоны хозяйственных нужд</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Транспортно-бытовые автомобили (ТБМ)</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Агрегат ремонтно-сварочный (АРС)</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Передвижные маслостанции</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Машины для взрывчатых веществ</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Бортовые автомобили с кранами-манипуляторами</span></div>
+                <div class="product-item" data-p-span="1"><span class="deco-dot-red"></span><span contenteditable="true">Автоцистерны и полуприцепы</span></div>
+                <div class="product-item highlight-full" data-p-span="2">
+                  <span class="deco-dot-red"></span>
+                  <span contenteditable="true">Специальный и технологический транспорт для повышения нефтегазоотдачи</span>
+                </div>
               </div>
             </div>
+
+            <div class="bento-item photo-card" data-span="2" style="min-height: 215px;" data-slot="p1_2">
+              <div class="photo-badge-top" contenteditable="true">КМУ</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=800&q=80" alt="Спецтехника">
+            </div>
+
+            <div class="bento-item photo-card" data-span="3" style="min-height: 215px;" data-slot="p1_3">
+              <div class="photo-badge-top" contenteditable="true">Автоцистерны</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80" alt="Спецтехника">
+            </div>
+
+            <div class="bento-item bento-card" data-span="7" style="min-height: 155px;">
+              <div class="pill-row">
+                <div class="h3-title" style="font-size:13.5px;" contenteditable="true">Свяжитесь с нами для получения информации!</div>
+                <div class="deco-dot-red"></div>
+              </div>
+              <div class="contacts-grid">
+                <div class="contact-box">
+                  <div class="contact-icon">✆</div>
+                  <div class="contact-lines" contenteditable="true">
+                    +7 (950) 74-98-781<br>
+                    +7 (3513) 289-770 — Алексей
+                  </div>
+                </div>
+                <div class="contact-box">
+                  <div class="contact-icon">✉</div>
+                  <div class="contact-lines" contenteditable="true">
+                    asv74miass@yandex.ru<br>
+                    www.asv74.com
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bento-item red-feature-card" data-span="5" style="min-height: 155px;">
+              <div>
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; font-weight: 600; margin-bottom: 4px;" contenteditable="true">
+                  Индивидуальное проектирование
+                </div>
+                <div style="font-size: 15px; font-weight: 700; line-height: 1.35;" contenteditable="true">
+                  Изготовление надстроек и комплектация строго по ТЗ заказчика
+                </div>
+              </div>
+              <div class="red-sphere"></div>
+            </div>
+
           </div>
         </div>
-
-        <div class="bento-item red-feature-card" data-span="5" style="min-height: 155px;">
-          <div>
-            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; font-weight: 600; margin-bottom: 4px;" contenteditable="true">
-              Индивидуальное проектирование
-            </div>
-            <div style="font-size: 15px; font-weight: 700; line-height: 1.35;" contenteditable="true">
-              Изготовление надстроек и комплектация оборудованием строго по ТЗ заказчика
-            </div>
-          </div>
-          <div class="red-sphere"></div>
-        </div>
-
       </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- СТРАНИЦА 2: ПАРМ И АРОК                                            -->
-    <!-- ================================================================= -->
+    <!-- СТРАНИЦА 2: ПАРМ И АРОК -->
     <div class="page-wrapper" id="pageWrap2">
       <div class="page-caption">
-        <span>СТРАНИЦА 02 / РЕМОНТНЫЕ АГРЕГАТЫ, МАСТЕРСКИЕ И ЛАБОРАТОРИИ</span>
-        <span>Размеры блоков изменяются независимо друг от друга</span>
+        <span>СТРАНИЦА 02 / РЕМОНТНЫЕ АГРЕГАТЫ И МАСТЕРСКИЕ</span>
+        <span>Альбомный формат 1280×820</span>
       </div>
-      <div class="banner-canvas" id="pageCanvas2">
+      <div class="canvas-scale-container">
+        <div class="canvas-scale-wrapper">
+          <div class="banner-canvas" id="pageCanvas2">
 
-        <div class="bento-item bento-card" data-span="6" style="min-height: 185px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Мобильная инфраструктура для ТЭК и ЖКХ</span>
-            <span class="deco-pill-red"></span>
-          </div>
-          <div class="h2-title" contenteditable="true">
-            Передвижные мастерские (ПАРМ), агрегаты АРОК, АНРВ, АРС и спецлаборатории
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Проектируем автономные комплексы для оперативного ремонта станков-качалок, трубопроводов, сварочных работ и диагностики в полевых условиях при температурах до −55 °C.
-          </div>
-        </div>
-
-        <div class="bento-item photo-card" data-span="6" style="min-height: 360px;" data-slot="p2_1">
-          <div class="photo-badge-top" contenteditable="true">Комплектация кузова-фургона по ТЗ</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80" alt="ПАРМ и АРОК">
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="3" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">АРОК и АНРВ</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Обслуживание нефтепромыслового оборудования и ремонт водоводов. Сварочный и слесарный посты.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="3" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">ПАРМ и АРС</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Токарные, сверлильные и верстачные модули, кран-укосина или КМУ, генераторы до 100 кВт.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">Маслостанции</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Заправка, фильтрация и замена технических жидкостей непосредственно на месте базирования техники.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">Лаборатории</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Лаборатории контроля, дефектоскопии и транспорт для повышения нефтегазоотдачи пластов.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="2" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Климат</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" contenteditable="true">−55°C</div>
-          <div class="body-sm" contenteditable="true">Арктический пакет утепления</div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="2" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Питание</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" contenteditable="true">100 кВт</div>
-          <div class="body-sm" contenteditable="true">Мощность генераторов и КОМ</div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="2" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Проекты</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" contenteditable="true">200+</div>
-          <div class="body-sm" contenteditable="true">Готовых планировок отсеков</div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="6" style="min-height: 165px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">Базовые опции северного и спец. исполнения</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            <span class="pill-tag-red" contenteditable="true">Сэндвич-панели 60–80 мм</span>
-            <span class="pill-tag" contenteditable="true">Северное исполнение (ХЛ)</span>
-            <span class="pill-tag-red" contenteditable="true">Отопители Webasto / Планар</span>
-            <span class="pill-tag" contenteditable="true">Взрывозащита (ADR/EX)</span>
-          </div>
-        </div>
-
-        <div class="bento-item red-feature-card" data-span="6" style="min-height: 165px;">
-          <div>
-            <div class="h3-title" style="color:#fff; margin-bottom:6px;" contenteditable="true">
-              Машины для перевозки взрывчатых веществ (EX/II, EX/III)
+            <div class="bento-item bento-card" data-span="6" style="min-height: 185px;">
+              <div class="pill-row">
+                <span class="pill-tag" contenteditable="true">Мобильная инфраструктура ТЭК</span>
+                <span class="deco-pill-red"></span>
+              </div>
+              <div class="h2-title" contenteditable="true">
+                Передвижные мастерские (ПАРМ), агрегаты АРОК, АНРВ и лаборатории
+              </div>
+              <div class="body-sm" contenteditable="true">
+                Проектируем автономные комплексы для оперативного ремонта станков-качалок и трубопроводов при температурах до −55 °C.
+              </div>
             </div>
-            <div class="body-sm" style="color:rgba(255,255,255,0.88);" contenteditable="true">
-              Полное соответствие требованиям ДОПОГ и ТР ТС: система пожаротушения, экранированная проводка, искрогаситель и локализация отсеков.
-            </div>
-          </div>
-          <div class="red-sphere"></div>
-        </div>
 
+            <div class="bento-item photo-card" data-span="6" style="min-height: 360px;" data-slot="p2_1">
+              <div class="photo-badge-top" contenteditable="true">Комплектация кузова по ТЗ</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80" alt="ПАРМ">
+            </div>
+
+            <div class="bento-item bento-card theme-gray" data-span="3" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="h3-title" contenteditable="true">АРОК и АНРВ</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="body-sm" contenteditable="true">
+                Обслуживание нефтепромыслового оборудования и ремонт водоводов.
+              </div>
+            </div>
+
+            <div class="bento-item bento-card theme-gray" data-span="3" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="h3-title" contenteditable="true">ПАРМ и АРС</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="body-sm" contenteditable="true">
+                Токарные модули, кран-укосина или КМУ, генераторы до 100 кВт.
+              </div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="3" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="h3-title" contenteditable="true">Маслостанции</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="body-sm" contenteditable="true">
+                Заправка, фильтрация и замена технических жидкостей.
+              </div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="3" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="h3-title" contenteditable="true">Лаборатории</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="body-sm" contenteditable="true">
+                Лаборатории контроля и дефектоскопии нефтегазоотдачи.
+              </div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="2" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="pill-tag" contenteditable="true">Климат</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="big-metric" contenteditable="true">−55°C</div>
+              <div class="body-sm" contenteditable="true">Арктический пакет</div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="2" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="pill-tag" contenteditable="true">Питание</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="big-metric" contenteditable="true">100 кВт</div>
+              <div class="body-sm" contenteditable="true">Генераторы и КОМ</div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="2" style="min-height: 165px;">
+              <div class="pill-row">
+                <span class="pill-tag" contenteditable="true">Проекты</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="big-metric" contenteditable="true">200+</div>
+              <div class="body-sm" contenteditable="true">Планировок отсеков</div>
+            </div>
+
+            <div class="bento-item red-feature-card" data-span="6" style="min-height: 165px;">
+              <div>
+                <div class="h3-title" style="color:#fff; margin-bottom:6px;" contenteditable="true">
+                  Машины для взрывчатых веществ (EX/II, EX/III)
+                </div>
+                <div class="body-sm" style="color:rgba(255,255,255,0.88);" contenteditable="true">
+                  Полное соответствие ДОПОГ: экранированная проводка и искрогасители.
+                </div>
+              </div>
+              <div class="red-sphere"></div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- СТРАНИЦА 3: ВАХТОВЫЕ АВТОБУСЫ                                      -->
-    <!-- ================================================================= -->
+    <!-- СТРАНИЦА 3: ВАХТОВЫЕ АВТОБУСЫ -->
     <div class="page-wrapper" id="pageWrap3">
       <div class="page-caption">
-        <span>СТРАНИЦА 03 / ВАХТОВЫЕ АВТОБУСЫ, ГПА КАТ. С, БОРТОВЫЕ С КМУ И АВТОЦИСТЕРНЫ</span>
-        <span>Фотографии масштабируются колесиком и перемещаются перетаскиванием мыши</span>
+        <span>СТРАНИЦА 03 / ВАХТОВЫЕ АВТОБУСЫ И КМУ</span>
+        <span>Альбомный формат 1280×820</span>
       </div>
-      <div class="banner-canvas" id="pageCanvas3">
-
-        <div class="bento-item bento-card" data-span="6" style="min-height: 190px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Надежная логистика персонала и грузов</span>
-            <span class="deco-pill-red"></span>
-          </div>
-          <div class="h2-title" contenteditable="true">
-            Вахтовые автобусы, ГПА кат. С, бортовые автомобили с КМУ и автоцистерны
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Базовые вездеходные шасси КАМАЗ, УРАЛ и IVECO с колесной формулой 4х4, 6х6 и 8х8 для круглогодичной эксплуатации на зимниках и бездорожье.
-          </div>
-        </div>
-
-        <div class="bento-item photo-card" data-span="3" style="min-height: 260px;" data-slot="p3_1">
-          <div class="photo-badge-top" contenteditable="true">Вахтовые автобусы 6х6</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80" alt="Вахтовка">
-        </div>
-
-        <div class="bento-item photo-card" data-span="3" style="min-height: 260px;" data-slot="p3_2">
-          <div class="photo-badge-top" contenteditable="true">Бортовые с КМУ</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80" alt="КМУ">
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 220px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">Вахтовые автобусы</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" style="font-size:26px;" contenteditable="true">14–32 места</div>
-          <div class="body-sm" contenteditable="true">
-            Сертифицированные кресла с ремнями, двойные стеклопакеты, переговорное устройство и заниженный вход.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 220px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">ГПА (кат. С) и ТБМ</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" style="font-size:26px;" contenteditable="true">2 отсека</div>
-          <div class="body-sm" contenteditable="true">
-            Комбинация пассажирского салона и грузовой бортовой платформы или спального бытового модуля.
-          </div>
-        </div>
-
-        <div class="bento-item dark-feature-card" data-span="6" style="min-height: 456px;">
-          <div class="pill-row">
-            <span class="pill-tag-red" contenteditable="true">Базовые шасси в наличии и под заказ</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="h2-title" style="color:#fff;" contenteditable="true">
-            КАМАЗ • УРАЛ • IVECO
-          </div>
-          <div class="body-sm" style="color:#cbd5e1;" contenteditable="true">
-            Подбираем оптимальное шасси под ваши дорожные и климатические условия: односкатная или двускатная ошиновка, система подкачки шин, предпусковые подогреватели, дополнительные топливные баки и лебедки.
-          </div>
-          <div style="display:flex; gap:12px;">
-            <div style="background:rgba(255,255,255,0.08); padding:12px 16px; border-radius:12px; flex:1;">
-              <div style="font-size:18px; font-weight:800; color:#ff4d55;" contenteditable="true">4x4 / 6x6 / 8x8</div>
-              <div style="font-size:11px; color:#cbd5e1;" contenteditable="true">Колесные формулы вездеходов</div>
+      <div class="canvas-scale-container">
+        <div class="canvas-scale-wrapper">
+          <div class="banner-canvas" id="pageCanvas3">
+            <div class="bento-item bento-card" data-span="6" style="min-height: 190px;">
+              <div class="pill-row">
+                <span class="pill-tag" contenteditable="true">Логистика персонала</span>
+                <span class="deco-pill-red"></span>
+              </div>
+              <div class="h2-title" contenteditable="true">Вахтовые автобусы, ГПА кат. С и автоцистерны</div>
+              <div class="body-sm" contenteditable="true">Базовые вездеходные шасси КАМАЗ, УРАЛ и IVECO (4х4, 6х6, 8х8).</div>
             </div>
-            <div style="background:rgba(255,255,255,0.08); padding:12px 16px; border-radius:12px; flex:1;">
-              <div style="font-size:18px; font-weight:800; color:#ff4d55;" contenteditable="true">100% ОТТС</div>
-              <div style="font-size:11px; color:#cbd5e1;" contenteditable="true">Полный пакет документов для ГИБДД</div>
+
+            <div class="bento-item photo-card" data-span="3" style="min-height: 260px;" data-slot="p3_1">
+              <div class="photo-badge-top" contenteditable="true">Вахтовки 6х6</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80" alt="Вахтовка">
+            </div>
+
+            <div class="bento-item photo-card" data-span="3" style="min-height: 260px;" data-slot="p3_2">
+              <div class="photo-badge-top" contenteditable="true">Бортовые с КМУ</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80" alt="КМУ">
+            </div>
+
+            <div class="bento-item dark-feature-card" data-span="6" style="min-height: 280px;">
+              <div class="pill-row">
+                <span class="pill-tag-red" contenteditable="true">Шасси в наличии и под заказ</span>
+                <span class="deco-dot-red"></span>
+              </div>
+              <div class="h2-title" style="color:#fff;" contenteditable="true">КАМАЗ • УРАЛ • IVECO</div>
+              <div class="body-sm" style="color:#cbd5e1;" contenteditable="true">Односкатная ошиновка, предпусковые подогреватели и лебедки.</div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="3" style="min-height: 220px;">
+              <div class="h3-title" contenteditable="true">Вахтовые автобусы</div>
+              <div class="big-metric" style="font-size:26px;" contenteditable="true">14–32 места</div>
+              <div class="body-sm" contenteditable="true">Сертифицированные кресла и двойные стеклопакеты.</div>
+            </div>
+
+            <div class="bento-item bento-card" data-span="3" style="min-height: 220px;">
+              <div class="h3-title" contenteditable="true">Автоцистерны</div>
+              <div class="big-metric" style="font-size:26px;" contenteditable="true">до 20 м³</div>
+              <div class="body-sm" contenteditable="true">Питьевая вода, техвода, ГСМ и нефть с термоизоляцией.</div>
             </div>
           </div>
         </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="3" style="min-height: 220px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">Бортовые с КМУ</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Монтаж тросовых и гидравлических кранов-манипуляторов (грузоподъемность от 3 до 12 тонн) за кабиной или на заднем свесе.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="3" style="min-height: 220px;">
-          <div class="pill-row">
-            <span class="h3-title" contenteditable="true">Автоцистерны</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="body-sm" contenteditable="true">
-            Цистерны для питьевой и технической воды, ГСМ, нефти и тех. растворов с термоизоляцией и насосными узлами.
-          </div>
-        </div>
-
       </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- СТРАНИЦА 4: ПРОИЗВОДСТВО                                          -->
-    <!-- ================================================================= -->
+    <!-- СТРАНИЦА 4: ЗАВОД -->
     <div class="page-wrapper" id="pageWrap4">
-      <div class="page-caption">
-        <span>СТРАНИЦА 04 / О ПРОИЗВОДСТВЕ, ТЕХНОЛОГИЯХ КУЗОВОСТРОЕНИЯ И ГАРАНТИЯХ</span>
-        <span>Каждая карточка сохраняет свой размер при изменении других</span>
-      </div>
-      <div class="banner-canvas" id="pageCanvas4">
-
-        <div class="bento-item red-feature-card" data-span="6" style="min-height: 250px; flex-direction:column; align-items:flex-start;">
-          <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-            <span class="pill-tag" style="background:rgba(255,255,255,0.2); color:#fff;" contenteditable="true">Собственное производство в г. Миасс</span>
-            <div class="red-sphere" style="width:46px; height:46px;"></div>
-          </div>
-          <div>
-            <div class="h2-title" style="color:#fff; margin-bottom:8px;" contenteditable="true">
-              Работаем без срывов сроков и гарантируем ресурс спецтехники в тяжелых условиях
+      <div class="page-caption"><span>СТРАНИЦА 04 / ПРОИЗВОДСТВО И ОТК</span></div>
+      <div class="canvas-scale-container">
+        <div class="canvas-scale-wrapper">
+          <div class="banner-canvas" id="pageCanvas4">
+            <div class="bento-item red-feature-card" data-span="6" style="min-height: 250px;">
+              <div>
+                <div class="h2-title" style="color:#fff; margin-bottom:8px;" contenteditable="true">Собственное производство в г. Миасс</div>
+                <div class="body-sm" style="color:#fff;" contenteditable="true">Полный цикл: от 3D-чертежей до испытаний кузовов и сдачи ОТК.</div>
+              </div>
+              <div class="red-sphere"></div>
             </div>
-            <div class="body-sm" style="color:rgba(255,255,255,0.9);" contenteditable="true">
-              Полный производственный цикл: от разработки 3D-чертежей в собственном конструкторском бюро до изготовления кузовов-фургонов, монтажа оборудования и приемо-сдаточных испытаний.
+            <div class="bento-item bento-card" data-span="3" style="min-height: 250px;">
+              <div class="big-metric" contenteditable="true">12–24 мес.</div>
+              <div class="body-sm" contenteditable="true">Заводская гарантия на шасси и фургон</div>
+            </div>
+            <div class="bento-item bento-card" data-span="3" style="min-height: 250px;">
+              <div class="big-metric" contenteditable="true">100%</div>
+              <div class="body-sm" contenteditable="true">Контроль ОТК и гидроиспытания</div>
+            </div>
+            <div class="bento-item photo-card" data-span="12" style="min-height: 380px;" data-slot="p4_1">
+              <div class="photo-badge-top" contenteditable="true">Сборочный комплекс</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=1000&q=80" alt="Цех">
             </div>
           </div>
         </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 250px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Гарантия</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" contenteditable="true">12–24 мес.</div>
-          <div class="body-sm" contenteditable="true">Заводская гарантия на шасси, фургон и установленное спецоборудование</div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 250px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Контроль ОТК</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" contenteditable="true">100%</div>
-          <div class="body-sm" contenteditable="true">Проверка герметичности, электрики и гидравлики перед отгрузкой</div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 480px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Кузовостроение</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="h3-title" contenteditable="true">Бескаркасные и каркасные сэндвич-панели</div>
-          <div class="body-sm" contenteditable="true">
-            Собственная линия вакуумной склейки панелей. Отсутствие «мостиков холода», оцинкованная сталь с полимерным покрытием и усиленный надрамник.
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 480px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Контроль качества</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="h3-title" contenteditable="true">Сертификация и ЭПТС</div>
-          <div class="body-sm" contenteditable="true">
-            Вся выпускаемая продукция сертифицирована в соответствии с ТР ТС 018/2011. Передача техники с действующим ЭПТС и паспортами на все крановые и силовые установки.
-          </div>
-        </div>
-
-        <div class="bento-item photo-card" data-span="6" style="min-height: 480px;" data-slot="p4_1">
-          <div class="photo-badge-top" contenteditable="true">Производственный комплекс и сборка надстроек</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=1000&q=80" alt="Производство">
-        </div>
-
       </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- СТРАНИЦА 5: ЭТАПЫ РАБОТЫ И ЛИЗИНГ                                 -->
-    <!-- ================================================================= -->
+    <!-- СТРАНИЦА 5: ЛИЗИНГ -->
     <div class="page-wrapper" id="pageWrap5">
-      <div class="page-caption">
-        <span>СТРАНИЦА 05 / КАК МЫ РАБОТАЕМ ПО ВАШЕМУ ТЗ, ФИНАНСИРОВАНИЕ И ДОСТАВКА</span>
-        <span>Плавное редактирование каждого блока без деформации других</span>
-      </div>
-      <div class="banner-canvas" id="pageCanvas5">
-
-        <div class="bento-item bento-card" data-span="6" style="min-height: 155px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Прозрачный процесс закупки</span>
-            <span class="deco-pill-red"></span>
-          </div>
-          <div class="h2-title" contenteditable="true">
-            От вашего технического задания до ввода спецтехники в эксплуатацию — 4 шага
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 155px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Финансирование</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" style="font-size:28px;" contenteditable="true">от 0% аванс</div>
-          <div class="body-sm" contenteditable="true">Аккредитация в крупнейших лизинговых компаниях РФ</div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="3" style="min-height: 155px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Госзакупки</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div class="big-metric" style="font-size:28px;" contenteditable="true">44 / 223-ФЗ</div>
-          <div class="body-sm" contenteditable="true">Подготовка ТЗ, НМЦК и пакета сертификатов для тендеров</div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="6" style="min-height: 130px;">
-          <div style="display:flex; gap:14px; align-items:flex-start;">
-            <div class="step-badge">1</div>
-            <div>
-              <div class="h3-title" contenteditable="true">Согласование ТЗ и 3D-компоновки</div>
-              <div class="body-sm" contenteditable="true">Анализируем ваше ТЗ, подбираем шасси, разрабатываем схему размещения оборудования и отправляем КП со сметой за 1 день.</div>
+      <div class="page-caption"><span>СТРАНИЦА 05 / ЛИЗИНГ И ДОСТАВКА</span></div>
+      <div class="canvas-scale-container">
+        <div class="canvas-scale-wrapper">
+          <div class="banner-canvas" id="pageCanvas5">
+            <div class="bento-item bento-card" data-span="6" style="min-height: 155px;">
+              <div class="h2-title" contenteditable="true">От технического задания до ввода — 4 шага</div>
+            </div>
+            <div class="bento-item bento-card" data-span="3" style="min-height: 155px;">
+              <div class="big-metric" style="font-size:28px;" contenteditable="true">от 0% аванс</div>
+              <div class="body-sm" contenteditable="true">Ведущие лизинговые компании РФ</div>
+            </div>
+            <div class="bento-item bento-card" data-span="3" style="min-height: 155px;">
+              <div class="big-metric" style="font-size:28px;" contenteditable="true">44 / 223-ФЗ</div>
+              <div class="body-sm" contenteditable="true">Подготовка документов под тендеры</div>
+            </div>
+            <div class="bento-item photo-card" data-span="12" style="min-height: 320px;" data-slot="p5_1">
+              <div class="photo-badge-top" contenteditable="true">Доставка по всей России</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1000&q=80" alt="Доставка">
             </div>
           </div>
         </div>
-
-        <div class="bento-item photo-card" data-span="6" style="min-height: 276px;" data-slot="p5_1">
-          <div class="photo-badge-top" contenteditable="true">Отгрузка спецтехники заказчикам по всей России</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=1000&q=80" alt="Доставка">
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="6" style="min-height: 130px;">
-          <div style="display:flex; gap:14px; align-items:flex-start;">
-            <div class="step-badge">2</div>
-            <div>
-              <div class="h3-title" contenteditable="true">Договор, тендер или оформление лизинга</div>
-              <div class="body-sm" contenteditable="true">Фиксируем стоимость и сроки в договоре. Работаем со всеми ведущими лизинговыми компаниями РФ.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="6" style="min-height: 130px;">
-          <div style="display:flex; gap:14px; align-items:flex-start;">
-            <div class="step-badge">3</div>
-            <div>
-              <div class="h3-title" contenteditable="true">Производство с фото- и видеоотчетами</div>
-              <div class="body-sm" contenteditable="true">Изготовление кузова-фургона, монтаж КМУ, станков и систем жизнеобеспечения с поэтапным контролем.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bento-item red-feature-card" data-span="6" style="min-height: 276px;">
-          <div>
-            <div class="h3-title" style="color:#fff; margin-bottom:6px;" contenteditable="true">
-              География поставок: ХМАО, ЯНАО, Сибирь, Дальний Восток, Урал и вся РФ
-            </div>
-            <div class="body-sm" style="color:rgba(255,255,255,0.9);" contenteditable="true">
-              Организуем перегон техники опытными водителями-испытателями или мультимодальную перевозку тралами и ж/д платформами с полным страхованием.
-            </div>
-          </div>
-          <div class="red-sphere"></div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="6" style="min-height: 130px;">
-          <div style="display:flex; gap:14px; align-items:flex-start;">
-            <div class="step-badge">4</div>
-            <div>
-              <div class="h3-title" contenteditable="true">Приемка и доставка на ваше месторождение или базу</div>
-              <div class="body-sm" contenteditable="true">Самовывоз со склада завода в г. Миасс либо доставка в любой регион РФ и СНГ с вводом в эксплуатацию.</div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- СТРАНИЦА 6: КОНТАКТЫ                                              -->
-    <!-- ================================================================= -->
+    <!-- СТРАНИЦА 6: КОНТАКТЫ -->
     <div class="page-wrapper" id="pageWrap6">
-      <div class="page-caption">
-        <span>СТРАНИЦА 06 / ЗАКЛЮЧИТЕЛЬНЫЙ СЛАЙД: КОНТАКТЫ И БЫСТРЫЙ РАСЧЕТ ТЗ</span>
-        <span>Мы всегда на связи</span>
-      </div>
-      <div class="banner-canvas" id="pageCanvas6">
-
-        <div class="bento-item logo-slot" data-span="3" style="min-height: 110px;">
-          <div class="logo-placeholder" onclick="document.getElementById('logoInput').click()">
-            <span>+ ВАШ ЛОГОТИП</span>
-            Синхронизируется со стр. 1
-          </div>
-          <img class="logo-preview-img" alt="Логотип" onclick="document.getElementById('logoInput').click()">
-        </div>
-
-        <div class="bento-item bento-card" data-span="4" style="min-height: 110px;">
-          <div class="pill-row">
-            <span class="pill-tag" contenteditable="true">Напрямую от производителя</span>
-            <span class="deco-pill-red"></span>
-          </div>
-          <div class="h2-title" style="font-size:18px;" contenteditable="true">
-            Как получить расчет стоимости по вашему ТЗ?
-          </div>
-        </div>
-
-        <div class="bento-item bento-card" data-span="5" style="min-height: 350px;">
-          <div class="pill-row">
-            <span class="pill-tag-red" contenteditable="true">Мы всегда на связи</span>
-            <span class="deco-dot-red"></span>
-          </div>
-          <div>
-            <div style="font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:4px;" contenteditable="true">Отдел продаж и работы с заказчиками:</div>
-            <div style="font-size:24px; font-weight:800; color:var(--text-main); line-height:1.35;" contenteditable="true">
-              +7 (950) 74-98-781<br>
-              +7 (3513) 289-770
+      <div class="page-caption"><span>СТРАНИЦА 06 / КОНТАКТЫ И ЗАПРОС РАСЧЕТА</span></div>
+      <div class="canvas-scale-container">
+        <div class="canvas-scale-wrapper">
+          <div class="banner-canvas" id="pageCanvas6">
+            <div class="bento-item logo-slot" data-span="4" style="min-height: 110px;">
+              <div class="logo-placeholder" onclick="document.getElementById('logoInput').click()">
+                <span>+ ВАШ ЛОГОТИП</span>
+              </div>
+              <img class="logo-preview-img" alt="Логотип">
             </div>
-            <div style="font-size:16px; font-weight:700; color:var(--accent-red); margin-top:4px;" contenteditable="true">
-              Контактное лицо: Алексей
+            <div class="bento-item bento-card" data-span="8" style="min-height: 110px;">
+              <div class="h2-title" style="font-size:18px;" contenteditable="true">Быстрый расчет коммерческого предложения</div>
             </div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div class="bento-card theme-gray" style="padding:12px;">
-              <div style="font-size:11px; color:var(--text-muted); font-weight:600;" contenteditable="true">Почта для ТЗ:</div>
-              <div style="font-size:13px; font-weight:700;" contenteditable="true">asv74miass@yandex.ru</div>
+            <div class="bento-item bento-card" data-span="6" style="min-height: 280px;">
+              <div class="h3-title" style="color:var(--accent-red);" contenteditable="true">Отдел продаж завода:</div>
+              <div style="font-size:22px; font-weight:800; line-height:1.4;" contenteditable="true">
+                +7 (950) 74-98-781<br>
+                +7 (3513) 289-770
+              </div>
+              <div class="body-sm" contenteditable="true">asv74miass@yandex.ru • www.asv74.com</div>
             </div>
-            <div class="bento-card theme-gray" style="padding:12px;">
-              <div style="font-size:11px; color:var(--text-muted); font-weight:600;" contenteditable="true">Официальный сайт:</div>
-              <div style="font-size:13px; font-weight:700;" contenteditable="true">www.asv74.com</div>
+            <div class="bento-item photo-card" data-span="6" style="min-height: 280px;" data-slot="p6_1">
+              <div class="photo-badge-top" contenteditable="true">Официальный представитель</div>
+              <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80" alt="Контакты">
             </div>
           </div>
         </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="7" style="min-height: 110px;">
-          <div style="display:flex; gap:14px; align-items:center;">
-            <div class="step-badge">✓</div>
-            <div>
-              <div class="h3-title" contenteditable="true">1. Направьте имеющееся ТЗ или список требований на почту</div>
-              <div class="body-sm" contenteditable="true">Даже если ТЗ описано в свободной форме — наши инженеры подготовят спецификацию и габаритный чертеж.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="7" style="min-height: 110px;">
-          <div style="display:flex; gap:14px; align-items:center;">
-            <div class="step-badge">✓</div>
-            <div>
-              <div class="h3-title" contenteditable="true">2. Получите до 3 вариантов комплектации под разный бюджет</div>
-              <div class="body-sm" contenteditable="true">Предложим оптимальные варианты шасси (КАМАЗ, УРАЛ, IVECO) и аналогов оборудования без потери надежности.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bento-item bento-card theme-gray" data-span="7" style="min-height: 110px;">
-          <div style="display:flex; gap:14px; align-items:center;">
-            <div class="step-badge">✓</div>
-            <div>
-              <div class="h3-title" contenteditable="true">3. Согласуем график производства и поставки</div>
-              <div class="body-sm" contenteditable="true">Закрепим персонального менеджера за вашим проектом на весь период изготовления и гарантийного обслуживания.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="bento-item photo-card" data-span="5" style="min-height: 360px;" data-slot="p6_1">
-          <div class="photo-badge-top" contenteditable="true">Официальный представитель • Поставка по всей РФ</div>
-          <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=1000&q=80" alt="Финальное фото">
-        </div>
-
-        <div class="bento-item red-feature-card" data-span="7" style="min-height: 210px;">
-          <div>
-            <div class="h3-title" style="color:#fff; margin-bottom:4px;" contenteditable="true">
-              Свяжитесь с нами для получения дополнительной информации!
-            </div>
-            <div class="body-sm" style="color:rgba(255,255,255,0.9);" contenteditable="true">
-              Оперативно ответим на вопросы по наличию шасси, срокам изготовления и комплектации спецтехники.
-            </div>
-          </div>
-          <div class="red-sphere"></div>
-        </div>
-
       </div>
     </div>
 
@@ -1469,139 +1061,79 @@
     let selectedBlock = null;
     let currentPhotoCard = null;
     let currentViewMode = 1;
-    const photoStateMap = {}; // slotId -> { zoom, x, y }
+    let canvasScaleMode = 'fit'; // 'fit' (по ширине экрана) или 'actual' (1:1 скролл)
+    const photoStateMap = {};
 
     // =========================================================================
-    // ИНИЦИАЛИЗАЦИЯ И РЕГУЛИРОВКА БЛОКОВ
+    // ИНИЦИАЛИЗАЦИЯ И АДАПТИВНЫЙ МАСШТАБ
     // =========================================================================
-    function initAllBentoBlocks() {
+    function initApp() {
       document.querySelectorAll('.bento-item').forEach(attachBlockControls);
       document.querySelectorAll('.photo-card').forEach(attachPhotoCardInteractions);
       document.querySelectorAll('.product-item').forEach(attachProductItemControls);
 
-      const firstPhoto = document.querySelector('.photo-card');
-      if (firstPhoto) selectPhotoCard(firstPhoto);
-
       const firstBlock = document.querySelector('#pageCanvas1 .bento-item');
       if (firstBlock) selectBlock(firstBlock);
+
+      window.addEventListener('resize', updateCanvasScale);
+      updateCanvasScale();
     }
 
-    function attachBlockControls(block) {
-      if (block.querySelector('.block-ui-bar')) return;
+    // Автоматический пересчет масштаба 1280px холста под экран смартфона
+    function updateCanvasScale() {
+      const isMobile = window.innerWidth <= 1024;
+      const targetCanvasWidth = 1280;
+      const containerPadding = 16;
+      const availableWidth = window.innerWidth - containerPadding;
 
-      const uiBar = document.createElement('div');
-      uiBar.className = 'block-ui-bar';
-      const spanVal = block.getAttribute('data-span') || '6';
-      uiBar.innerHTML = `
-        <span class="drag-handle" title="Потяните, чтобы переместить блок">⠿</span>
-        <button class="mini-ui-btn" title="Сузить блок (-1 кол.)" onclick="event.stopPropagation(); changeBlockSpanDelta(this.closest('.bento-item'), -1)">−</button>
-        <span class="span-indicator">${spanVal} кол.</span>
-        <button class="mini-ui-btn" title="Растянуть блок (+1 кол.)" onclick="event.stopPropagation(); changeBlockSpanDelta(this.closest('.bento-item'), 1)">+</button>
-      `;
-      block.appendChild(uiBar);
+      const scaleFactor = (isMobile && canvasScaleMode === 'fit') 
+        ? Math.min(1, Math.max(0.24, availableWidth / targetCanvasWidth)) 
+        : 1;
 
-      const handleE = document.createElement('div');
-      handleE.className = 'resize-handle-e';
-      handleE.title = 'Тяните влево/вправо для изменения ширины блока';
-
-      const handleS = document.createElement('div');
-      handleS.className = 'resize-handle-s';
-      handleS.title = 'Тяните вверх/вниз для изменения высоты только этого блока';
-
-      const handleSE = document.createElement('div');
-      handleSE.className = 'resize-handle-se';
-      handleSE.innerHTML = '◢';
-      handleSE.title = 'Тяните для независимого изменения размера';
-
-      block.appendChild(handleE);
-      block.appendChild(handleS);
-      block.appendChild(handleSE);
-
-      block.addEventListener('mousedown', (e) => {
-        // Не перехватываем клики по инлайн-кнопкам и редактируемым полям
-        if (e.target.closest('.photo-inline-controls') || e.target.isContentEditable) return;
-        selectBlock(block);
+      document.querySelectorAll('.canvas-scale-wrapper').forEach(wrapper => {
+        const canvas = wrapper.querySelector('.banner-canvas');
+        if (scaleFactor < 1) {
+          wrapper.style.transform = `scale(${scaleFactor})`;
+          wrapper.style.width = `${targetCanvasWidth}px`;
+          // Компенсация высоты пустого пространства при масштабировании
+          const scaledHeight = (canvas ? canvas.offsetHeight : 820) * scaleFactor;
+          wrapper.parentElement.style.height = `${scaledHeight + 10}px`;
+        } else {
+          wrapper.style.transform = 'none';
+          wrapper.style.width = 'auto';
+          wrapper.parentElement.style.height = 'auto';
+        }
       });
-
-      const dragHandle = uiBar.querySelector('.drag-handle');
-      dragHandle.addEventListener('mousedown', () => block.setAttribute('draggable', 'true'));
-      dragHandle.addEventListener('mouseup', () => block.removeAttribute('draggable'));
-
-      block.addEventListener('dragstart', handleBlockDragStart);
-      block.addEventListener('dragover', handleBlockDragOver);
-      block.addEventListener('dragleave', handleBlockDragLeave);
-      block.addEventListener('drop', handleBlockDrop);
-      block.addEventListener('dragend', handleBlockDragEnd);
-
-      handleE.addEventListener('mousedown', (e) => startBlockResize(e, block, 'e'));
-      handleS.addEventListener('mousedown', (e) => startBlockResize(e, block, 's'));
-      handleSE.addEventListener('mousedown', (e) => startBlockResize(e, block, 'se'));
     }
+
+    function toggleCanvasScaleMode() {
+      const btn = document.getElementById('scaleToggleBtn');
+      if (canvasScaleMode === 'fit') {
+        canvasScaleMode = 'actual';
+        btn.textContent = '🔍 1:1 (Реальный)';
+      } else {
+        canvasScaleMode = 'fit';
+        btn.textContent = '📱 По экрану';
+      }
+      updateCanvasScale();
+    }
+
+    function toggleExportMenu() {
+      const menu = document.getElementById('exportMenu');
+      menu.classList.toggle('open');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#exportMenu') && !e.target.closest('.header-actions')) {
+        document.getElementById('exportMenu').classList.remove('open');
+      }
+    });
 
     // =========================================================================
-    // НЕЗАВИСИМОЕ ИЗМЕНЕНИЕ РАЗМЕРОВ БЛОКА (БЕЗ ВЛИЯНИЯ НА СОСЕДЕЙ)
+    // ВЫБОР И УПРАВЛЕНИЕ БЛОКОМ (ВКЛЮЧАЯ МОБИЛЬНУЮ НИЖНЮЮ ПАНЕЛЬ)
     // =========================================================================
-    function startBlockResize(e, block, direction) {
-      e.stopPropagation();
-      e.preventDefault();
-      selectBlock(block);
-
-      const canvas = block.closest('.banner-canvas');
-      canvas.classList.add('show-grid-guides');
-      block.classList.add('resizing-now');
-
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startSpan = parseInt(block.getAttribute('data-span') || '6', 10);
-      const startHeight = block.getBoundingClientRect().height;
-      const colStepPx = (canvas.clientWidth - 48) / 12;
-
-      function onMouseMove(moveEvent) {
-        if (direction === 'e' || direction === 'se') {
-          const deltaX = moveEvent.clientX - startX;
-          const deltaCols = Math.round(deltaX / colStepPx);
-          const newSpan = Math.max(1, Math.min(12, startSpan + deltaCols));
-          applyBlockSpan(block, newSpan);
-        }
-        if (direction === 's' || direction === 'se') {
-          const deltaY = moveEvent.clientY - startY;
-          const newHeight = Math.max(70, Math.round((startHeight + deltaY) / 5) * 5);
-          block.style.minHeight = newHeight + 'px';
-          block.style.height = newHeight + 'px';
-          document.getElementById('blockHeightRange').value = newHeight;
-          document.getElementById('blockHeightBadge').textContent = newHeight + 'px';
-        }
-      }
-
-      function onMouseUp() {
-        canvas.classList.remove('show-grid-guides');
-        block.classList.remove('resizing-now');
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-      }
-
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    }
-
-    function applyBlockSpan(block, spanVal) {
-      const clamped = Math.max(1, Math.min(12, parseInt(spanVal, 10)));
-      block.setAttribute('data-span', clamped);
-      const indicator = block.querySelector('.span-indicator');
-      if (indicator) indicator.textContent = clamped + ' кол.';
-      if (selectedBlock === block) {
-        document.getElementById('blockSpanRange').value = clamped;
-        document.getElementById('blockSpanBadge').textContent = clamped + '/12';
-      }
-    }
-
-    function changeBlockSpanDelta(block, delta) {
-      selectBlock(block);
-      const current = parseInt(block.getAttribute('data-span') || '6', 10);
-      applyBlockSpan(block, current + delta);
-    }
-
     function selectBlock(block) {
+      if (!block) return;
       document.querySelectorAll('.bento-item').forEach(el => el.classList.remove('selected-block'));
       block.classList.add('selected-block');
       selectedBlock = block;
@@ -1614,9 +1146,52 @@
       document.getElementById('blockHeightRange').value = minH;
       document.getElementById('blockHeightBadge').textContent = minH + 'px';
 
+      // Обновление мобильной нижней панели
+      const mobileBar = document.getElementById('mobileBottomBar');
+      const mobilePhotoTools = document.getElementById('mobilePhotoTools');
+      const mobileSpanVal = document.getElementById('mobileSpanVal');
+      const mobileBlockName = document.getElementById('mobileBlockName');
+
+      mobileSpanVal.textContent = `${span} / 12`;
+      mobileBar.classList.add('active');
+
       if (block.classList.contains('photo-card')) {
         selectPhotoCard(block);
+        mobilePhotoTools.style.display = 'flex';
+        mobileBlockName.textContent = '📷 Фото-карточка';
+      } else {
+        mobilePhotoTools.style.display = 'none';
+        mobileBlockName.textContent = '📄 Карточка Bento';
       }
+    }
+
+    function moveBlockUpDown(direction) {
+      if (!selectedBlock) return;
+      const parent = selectedBlock.parentElement;
+      if (direction === -1 && selectedBlock.previousElementSibling) {
+        parent.insertBefore(selectedBlock, selectedBlock.previousElementSibling);
+      } else if (direction === 1 && selectedBlock.nextElementSibling) {
+        parent.insertBefore(selectedBlock.nextElementSibling, selectedBlock);
+      }
+      updateCanvasScale();
+    }
+
+    function applyBlockSpan(block, spanVal) {
+      const clamped = Math.max(1, Math.min(12, parseInt(spanVal, 10)));
+      block.setAttribute('data-span', clamped);
+      const indicator = block.querySelector('.span-indicator');
+      if (indicator) indicator.textContent = clamped + ' кол.';
+      
+      document.getElementById('blockSpanRange').value = clamped;
+      document.getElementById('blockSpanBadge').textContent = clamped + '/12';
+      document.getElementById('mobileSpanVal').textContent = `${clamped} / 12`;
+      updateCanvasScale();
+    }
+
+    function changeBlockSpanDelta(block, delta) {
+      if (!block) return;
+      const current = parseInt(block.getAttribute('data-span') || '6', 10);
+      applyBlockSpan(block, current + delta);
     }
 
     function setSelectedBlockSpan(val) {
@@ -1629,18 +1204,13 @@
       selectedBlock.style.minHeight = val + 'px';
       selectedBlock.style.height = val + 'px';
       document.getElementById('blockHeightBadge').textContent = val + 'px';
+      updateCanvasScale();
     }
 
     function cycleBlockTheme() {
       if (!selectedBlock || selectedBlock.classList.contains('photo-card')) return;
-      if (selectedBlock.classList.contains('red-feature-card')) {
-        selectedBlock.classList.remove('red-feature-card');
-        selectedBlock.classList.add('bento-card');
-      }
-      if (selectedBlock.classList.contains('dark-feature-card')) {
-        selectedBlock.classList.remove('dark-feature-card');
-        selectedBlock.classList.add('bento-card');
-      }
+      selectedBlock.classList.remove('red-feature-card', 'dark-feature-card');
+      selectedBlock.classList.add('bento-card');
 
       const themes = ['default', 'theme-gray', 'theme-red', 'theme-dark'];
       let currentIdx = 0;
@@ -1654,58 +1224,7 @@
     }
 
     // =========================================================================
-    // DRAG & DROP БЛОКОВ
-    // =========================================================================
-    let draggedBlock = null;
-
-    function handleBlockDragStart(e) {
-      draggedBlock = this;
-      this.classList.add('dragging-source');
-      const canvas = this.closest('.banner-canvas');
-      if (canvas) canvas.classList.add('show-grid-guides');
-      e.dataTransfer.effectAllowed = 'move';
-    }
-
-    function handleBlockDragOver(e) {
-      if (!draggedBlock || draggedBlock === this) return;
-      if (draggedBlock.parentElement !== this.parentElement) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      this.classList.add('drag-over-target');
-    }
-
-    function handleBlockDragLeave() {
-      this.classList.remove('drag-over-target');
-    }
-
-    function handleBlockDrop(e) {
-      e.stopPropagation();
-      this.classList.remove('drag-over-target');
-      if (!draggedBlock || draggedBlock === this) return;
-      const container = this.parentElement;
-      if (draggedBlock.parentElement !== container) return;
-
-      const children = Array.from(container.children);
-      const draggedIndex = children.indexOf(draggedBlock);
-      const targetIndex = children.indexOf(this);
-
-      if (draggedIndex < targetIndex) {
-        container.insertBefore(draggedBlock, this.nextSibling);
-      } else {
-        container.insertBefore(draggedBlock, this);
-      }
-    }
-
-    function handleBlockDragEnd() {
-      this.classList.remove('dragging-source');
-      this.removeAttribute('draggable');
-      document.querySelectorAll('.bento-item').forEach(el => el.classList.remove('drag-over-target'));
-      document.querySelectorAll('.banner-canvas').forEach(c => c.classList.remove('show-grid-guides'));
-      draggedBlock = null;
-    }
-
-    // =========================================================================
-    // РЕДАКТИРОВАНИЕ ФОТО ВНУТРИ БЛОКА (ЗУМ КОЛЕСОМ, СДВИГ МЫШЬЮ, ИНЛАЙН-ПАНЕЛЬ)
+    // TOUCH И МЫШЬ ДЛЯ ФОТОГРАФИЙ (СВАЙП / PAN И ЗУМ)
     // =========================================================================
     function attachPhotoCardInteractions(card) {
       const slotKey = card.getAttribute('data-slot') || ('slot_' + Math.random().toString(36).substr(2, 9));
@@ -1715,57 +1234,77 @@
         photoStateMap[slotKey] = { zoom: 1, x: 0, y: 0 };
       }
 
-      // Добавляем инлайн-панель инструментов внутрь фотокарточки
+      // Инлайн-контроллеры для десктопа
       if (!card.querySelector('.photo-inline-controls')) {
         const ctrl = document.createElement('div');
         ctrl.className = 'photo-inline-controls';
         ctrl.innerHTML = `
-          <button class="photo-ctrl-btn" title="Приблизить" onclick="event.stopPropagation(); inlineZoom(this, 0.15)">＋</button>
-          <button class="photo-ctrl-btn" title="Отдалить" onclick="event.stopPropagation(); inlineZoom(this, -0.15)">−</button>
-          <button class="photo-ctrl-btn" title="Сбросить" onclick="event.stopPropagation(); inlineResetPhoto(this)">⟲</button>
-          <button class="photo-ctrl-btn" title="Загрузить новое фото" onclick="event.stopPropagation(); triggerCardUpload(this)">📷 Заменить</button>
-          <span class="photo-ctrl-hint">Колесо: зум • Мышь: сдвиг</span>
+          <button class="photo-ctrl-btn" onclick="event.stopPropagation(); inlineZoom(this, 0.15)">＋</button>
+          <button class="photo-ctrl-btn" onclick="event.stopPropagation(); inlineZoom(this, -0.15)">−</button>
+          <button class="photo-ctrl-btn" onclick="event.stopPropagation(); inlineResetPhoto(this)">⟲</button>
+          <button class="photo-ctrl-btn" onclick="event.stopPropagation(); triggerCardUpload(this)">📷</button>
+          <span class="photo-ctrl-hint">Сдвиг / Зум</span>
         `;
         card.appendChild(ctrl);
       }
 
-      // 1. Зум колесиком мыши строго внутри блока без деформации пропорций
+      // Зум колесиком (десктоп)
       card.addEventListener('wheel', (e) => {
         e.preventDefault();
         selectPhotoCard(card);
         const state = photoStateMap[slotKey];
-        const delta = e.deltaY < 0 ? 0.08 : -0.08;
-        state.zoom = Math.max(1, Math.min(3.5, state.zoom + delta));
+        state.zoom = Math.max(1, Math.min(3.5, state.zoom + (e.deltaY < 0 ? 0.08 : -0.08)));
         renderCardPhoto(card);
       }, { passive: false });
 
-      // 2. Панорамирование (перетаскивание фото внутри карточки мышью)
-      card.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.photo-inline-controls') || e.target.closest('.photo-badge-top') || e.target.closest('.block-ui-bar') || e.target.classList.contains('resize-handle-e') || e.target.classList.contains('resize-handle-s') || e.target.classList.contains('resize-handle-se')) {
-          return;
-        }
-
+      // Сенсорный сдвиг (Touch Drag) и мышь
+      function startPan(clientX, clientY) {
         selectPhotoCard(card);
         const state = photoStateMap[slotKey];
-        const startX = e.clientX;
-        const startY = e.clientY;
+        const startX = clientX;
+        const startY = clientY;
         const initX = state.x;
         const initY = state.y;
 
-        function onPanMove(moveEvt) {
-          state.x = initX + (moveEvt.clientX - startX);
-          state.y = initY + (moveEvt.clientY - startY);
+        function onMove(cx, cy) {
+          state.x = initX + (cx - startX);
+          state.y = initY + (cy - startY);
           renderCardPhoto(card);
         }
 
-        function onPanUp() {
-          window.removeEventListener('mousemove', onPanMove);
-          window.removeEventListener('mouseup', onPanUp);
+        function onEnd() {
+          window.removeEventListener('mousemove', mouseMoveHandler);
+          window.removeEventListener('mouseup', mouseUpHandler);
+          window.removeEventListener('touchmove', touchMoveHandler);
+          window.removeEventListener('touchend', touchEndHandler);
         }
 
-        window.addEventListener('mousemove', onPanMove);
-        window.addEventListener('mouseup', onPanUp);
+        function mouseMoveHandler(e) { onMove(e.clientX, e.clientY); }
+        function mouseUpHandler() { onEnd(); }
+        function touchMoveHandler(e) {
+          if (e.touches.length === 1) {
+            onMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }
+        function touchEndHandler() { onEnd(); }
+
+        window.addEventListener('mousemove', mouseMoveHandler);
+        window.addEventListener('mouseup', mouseUpHandler);
+        window.addEventListener('touchmove', touchMoveHandler, { passive: true });
+        window.addEventListener('touchend', touchEndHandler);
+      }
+
+      card.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.photo-inline-controls') || e.target.closest('.photo-badge-top') || e.target.closest('.block-ui-bar')) return;
+        startPan(e.clientX, e.clientY);
       });
+
+      card.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.photo-inline-controls') || e.target.closest('.photo-badge-top')) return;
+        if (e.touches.length === 1) {
+          startPan(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
     }
 
     function renderCardPhoto(card) {
@@ -1773,7 +1312,6 @@
       const state = photoStateMap[slotKey] || { zoom: 1, x: 0, y: 0 };
       const img = card.querySelector('img');
       if (img) {
-        // Пропорции сохраняются строго (scale одинаков по X и Y, object-fit: cover)
         img.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.zoom})`;
       }
     }
@@ -1799,9 +1337,27 @@
       renderCardPhoto(card);
     }
 
+    function mobileAdjustPhotoZoom(delta) {
+      if (!currentPhotoCard) return;
+      const slotKey = currentPhotoCard.getAttribute('data-slot');
+      const state = photoStateMap[slotKey];
+      state.zoom = Math.max(1, Math.min(3.5, state.zoom + delta));
+      renderCardPhoto(currentPhotoCard);
+    }
+
+    function mobileResetPhoto() {
+      if (!currentPhotoCard) return;
+      const slotKey = currentPhotoCard.getAttribute('data-slot');
+      photoStateMap[slotKey] = { zoom: 1, x: 0, y: 0 };
+      renderCardPhoto(currentPhotoCard);
+    }
+
+    function triggerActivePhotoUpload() {
+      document.getElementById('photoInput').click();
+    }
+
     function triggerCardUpload(btn) {
-      const card = btn.closest('.photo-card');
-      selectPhotoCard(card);
+      selectPhotoCard(btn.closest('.photo-card'));
       document.getElementById('photoInput').click();
     }
 
@@ -1821,8 +1377,29 @@
     }
 
     // =========================================================================
-    // ДОБАВЛЕНИЕ И УДАЛЕНИЕ БЛОКОВ
+    // УПРАВЛЕНИЕ БЛОКАМИ (ДОБАВЛЕНИЕ, КОПИРОВАНИЕ, УДАЛЕНИЕ, DRAG)
     // =========================================================================
+    function attachBlockControls(block) {
+      if (block.querySelector('.block-ui-bar')) return;
+
+      const uiBar = document.createElement('div');
+      uiBar.className = 'block-ui-bar';
+      const spanVal = block.getAttribute('data-span') || '6';
+      uiBar.innerHTML = `
+        <span class="drag-handle" title="Переместить">⠿</span>
+        <button class="mini-ui-btn" onclick="event.stopPropagation(); changeBlockSpanDelta(this.closest('.bento-item'), -1)">−</button>
+        <span class="span-indicator">${spanVal}</span>
+        <button class="mini-ui-btn" onclick="event.stopPropagation(); changeBlockSpanDelta(this.closest('.bento-item'), 1)">+</button>
+      `;
+      block.appendChild(uiBar);
+
+      // Клик / Тап выбирает блок
+      block.addEventListener('click', (e) => {
+        if (e.target.closest('.photo-inline-controls') || e.target.isContentEditable) return;
+        selectBlock(block);
+      });
+    }
+
     function addNewBlockToCurrentPage(type) {
       const targetPage = currentViewMode === 'all' ? 1 : currentViewMode;
       const canvas = document.getElementById('pageCanvas' + targetPage);
@@ -1835,7 +1412,7 @@
         newBlock.setAttribute('data-slot', slotId);
         newBlock.style.minHeight = '220px';
         newBlock.innerHTML = `
-          <div class="photo-badge-top" contenteditable="true">Новая фото-карточка</div>
+          <div class="photo-badge-top" contenteditable="true">Фото-карточка</div>
           <img crossorigin="anonymous" src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80" alt="Фото">
         `;
         canvas.appendChild(newBlock);
@@ -1851,104 +1428,49 @@
             <span class="pill-tag" contenteditable="true">Новый блок</span>
             <span class="deco-dot-red"></span>
           </div>
-          <div class="h3-title" contenteditable="true">Заголовок карточки</div>
-          <div class="body-sm" contenteditable="true">Нажмите на текст, чтобы отредактировать описание, или потяните за правую грань для изменения ширины.</div>
+          <div class="h3-title" contenteditable="true">Заголовок блока</div>
+          <div class="body-sm" contenteditable="true">Нажмите на текст для ввода описания.</div>
         `;
         canvas.appendChild(newBlock);
         attachBlockControls(newBlock);
         selectBlock(newBlock);
       }
+      updateCanvasScale();
     }
 
     function duplicateSelectedBlock() {
       if (!selectedBlock) return;
       const clone = selectedBlock.cloneNode(true);
-      clone.querySelectorAll('.block-ui-bar, .resize-handle-e, .resize-handle-s, .resize-handle-se, .photo-inline-controls').forEach(el => el.remove());
+      clone.querySelectorAll('.block-ui-bar, .photo-inline-controls').forEach(el => el.remove());
       if (clone.classList.contains('photo-card')) {
         clone.setAttribute('data-slot', 'slot_' + Date.now());
       }
       selectedBlock.parentElement.insertBefore(clone, selectedBlock.nextSibling);
       attachBlockControls(clone);
-      if (clone.classList.contains('photo-card')) {
-        attachPhotoCardInteractions(clone);
-      }
+      if (clone.classList.contains('photo-card')) attachPhotoCardInteractions(clone);
       selectBlock(clone);
+      updateCanvasScale();
     }
 
     function deleteSelectedBlock() {
       if (!selectedBlock) return;
       const parent = selectedBlock.parentElement;
       if (parent.querySelectorAll('.bento-item').length <= 1) {
-        alert('На странице должен оставаться хотя бы один блок.');
+        alert('На слайде должен оставаться минимум один блок.');
         return;
       }
-      selectedBlock.remove();
-      const firstRemaining = parent.querySelector('.bento-item');
-      if (firstRemaining) selectBlock(firstRemaining);
+      const toRemove = selectedBlock;
+      selectedBlock = null;
+      toRemove.remove();
+      document.getElementById('mobileBottomBar').classList.remove('active');
+      const first = parent.querySelector('.bento-item');
+      if (first) selectBlock(first);
+      updateCanvasScale();
     }
 
     // =========================================================================
-    // СПИСОК ТЕХНИКИ И НАВИГАЦИЯ
+    // ПЕРЕКЛЮЧЕНИЕ СЛАЙДОВ, ЛОГО И СПИСКА ТЕХНИКИ
     // =========================================================================
-    let draggedProdItem = null;
-
-    function attachProductItemControls(item) {
-      if (item.querySelector('.prod-item-tools')) return;
-      const tools = document.createElement('span');
-      tools.className = 'prod-item-tools';
-      tools.innerHTML = `
-        <button class="prod-tool-btn" title="Переместить пункт" onmousedown="this.closest('.product-item').setAttribute('draggable','true')">⠿</button>
-        <button class="prod-tool-btn" title="Растянуть на 1 или 2 колонки" onclick="event.stopPropagation(); toggleProductItemSpan(this.closest('.product-item'))">↔</button>
-        <button class="prod-tool-btn" title="Удалить пункт" onclick="event.stopPropagation(); this.closest('.product-item').remove()">✕</button>
-      `;
-      item.appendChild(tools);
-
-      item.addEventListener('dragstart', function(e) {
-        e.stopPropagation();
-        draggedProdItem = this;
-        this.style.opacity = '0.4';
-      });
-      item.addEventListener('dragover', function(e) {
-        if (!draggedProdItem || draggedProdItem === this) return;
-        e.preventDefault();
-        e.stopPropagation();
-      });
-      item.addEventListener('drop', function(e) {
-        e.stopPropagation();
-        if (!draggedProdItem || draggedProdItem === this) return;
-        const grid = this.parentElement;
-        const items = Array.from(grid.children);
-        if (items.indexOf(draggedProdItem) < items.indexOf(this)) {
-          grid.insertBefore(draggedProdItem, this.nextSibling);
-        } else {
-          grid.insertBefore(draggedProdItem, this);
-        }
-      });
-      item.addEventListener('dragend', function(e) {
-        e.stopPropagation();
-        this.style.opacity = '1';
-        this.removeAttribute('draggable');
-        draggedProdItem = null;
-      });
-    }
-
-    function toggleProductItemSpan(item) {
-      const current = item.getAttribute('data-p-span') || '1';
-      const next = current === '2' ? '1' : '2';
-      item.setAttribute('data-p-span', next);
-      item.classList.toggle('highlight-full', next === '2');
-    }
-
-    function addProductItem() {
-      const grid = document.getElementById('productsGrid');
-      const div = document.createElement('div');
-      div.className = 'product-item';
-      div.setAttribute('data-p-span', '1');
-      div.innerHTML = `<span class="deco-dot-red"></span><span contenteditable="true">Новая позиция спецтехники</span>`;
-      grid.insertBefore(div, grid.lastElementChild);
-      attachProductItemControls(div);
-    }
-
     function showPage(pageNum, btnEl) {
       currentViewMode = pageNum;
       document.querySelectorAll('.page-tab').forEach(b => b.classList.remove('active-tab'));
@@ -1958,6 +1480,7 @@
         const wrap = document.getElementById('pageWrap' + i);
         wrap.classList.toggle('visible', pageNum === 'all' || pageNum === i);
       }
+      setTimeout(updateCanvasScale, 30);
     }
 
     function handleLogoUpload(event) {
@@ -1977,16 +1500,52 @@
       reader.readAsDataURL(file);
     }
 
+    function attachProductItemControls(item) {
+      if (item.querySelector('.prod-item-tools')) return;
+      const tools = document.createElement('span');
+      tools.className = 'prod-item-tools';
+      tools.innerHTML = `
+        <button class="prod-tool-btn" onclick="event.stopPropagation(); toggleProductItemSpan(this.closest('.product-item'))">↔</button>
+        <button class="prod-tool-btn" onclick="event.stopPropagation(); this.closest('.product-item').remove()">✕</button>
+      `;
+      item.appendChild(tools);
+    }
+
+    function toggleProductItemSpan(item) {
+      const current = item.getAttribute('data-p-span') || '1';
+      const next = current === '2' ? '1' : '2';
+      item.setAttribute('data-p-span', next);
+      item.classList.toggle('highlight-full', next === '2');
+      updateCanvasScale();
+    }
+
+    function addProductItem() {
+      const grid = document.getElementById('productsGrid');
+      const div = document.createElement('div');
+      div.className = 'product-item';
+      div.setAttribute('data-p-span', '1');
+      div.innerHTML = `<span class="deco-dot-red"></span><span contenteditable="true">Новая позиция спецтехники</span>`;
+      grid.insertBefore(div, grid.lastElementChild);
+      attachProductItemControls(div);
+      updateCanvasScale();
+    }
+
     // =========================================================================
-    // ЭКСПОРТ В PDF И PNG
+    // ЭКСПОРТ (РЕНДЕР В PDF И PNG С СОХРАНЕНИЕМ РАЗРЕШЕНИЯ 1280×820)
     // =========================================================================
     async function renderPageCanvas(pageNum) {
       const wrap = document.getElementById('pageWrap' + pageNum);
       const canvasEl = document.getElementById('pageCanvas' + pageNum);
+      const scaleWrapper = canvasEl.closest('.canvas-scale-wrapper');
       const wasVisible = wrap.classList.contains('visible');
 
       if (!wasVisible) wrap.classList.add('visible');
       canvasEl.classList.add('exporting-clean');
+
+      // Временно сбрасываем масштаб для рендера в оригинале 1280px
+      const prevTransform = scaleWrapper.style.transform;
+      scaleWrapper.style.transform = 'none';
+
       await new Promise(r => setTimeout(r, 60));
 
       const renderedCanvas = await html2canvas(canvasEl, {
@@ -1996,6 +1555,7 @@
         backgroundColor: '#f5f6f8'
       });
 
+      scaleWrapper.style.transform = prevTransform;
       canvasEl.classList.remove('exporting-clean');
       if (!wasVisible) wrap.classList.remove('visible');
       return renderedCanvas;
@@ -2026,9 +1586,9 @@
           pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
         }
 
-        pdf.save('KP_AvtoSpecVan_Bento_Full.pdf');
+        pdf.save('KP_AvtoSpecVan_Full.pdf');
       } catch (err) {
-        alert('Ошибка при создании PDF: ' + err.message);
+        alert('Ошибка PDF: ' + err.message);
       } finally {
         overlay.classList.remove('active');
       }
@@ -2037,7 +1597,7 @@
     async function exportSinglePagePDF() {
       const targetPage = currentViewMode === 'all' ? 1 : currentViewMode;
       const overlay = document.getElementById('pdfOverlay');
-      document.getElementById('pdfStatusText').textContent = `Генерация PDF (Страница ${targetPage})...`;
+      document.getElementById('pdfStatusText').textContent = `Экспорт страницы ${targetPage}...`;
       overlay.classList.add('active');
 
       try {
@@ -2054,9 +1614,9 @@
         });
 
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, w, h);
-        pdf.save(`KP_AvtoSpecVan_Page_${targetPage}.pdf`);
+        pdf.save(`KP_Page_${targetPage}.pdf`);
       } catch (err) {
-        alert('Ошибка при экспорте: ' + err.message);
+        alert('Ошибка PDF: ' + err.message);
       } finally {
         overlay.classList.remove('active');
       }
@@ -2067,13 +1627,13 @@
       for (const pNum of pagesToExport) {
         const canvas = await renderPageCanvas(pNum);
         const link = document.createElement('a');
-        link.download = `KP_AvtoSpecVan_Page_${pNum}.png`;
+        link.download = `KP_Page_${pNum}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
       }
     }
 
-    window.addEventListener('DOMContentLoaded', initAllBentoBlocks);
+    window.addEventListener('DOMContentLoaded', initApp);
   </script>
 </body>
 </html>
