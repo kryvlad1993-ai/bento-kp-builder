@@ -23,13 +23,16 @@ jobs:
         run: npm install
 
       - name: Build Electron App
-        run: npx electron-builder --win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
 
-      # Этот шаг выкладывает файлы прямо на экран Actions:
       - name: Save Artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: Bento-KP-Windows-App
           path: |
             dist/*.exe
             dist/latest.yml
+          if-no-files-found: warn
